@@ -41,6 +41,7 @@ class HomeScreen extends ConsumerWidget {
     final user = ref.watch(authNotifierProvider).valueOrNull?.user;
     final workoutsAsync = ref.watch(workoutsProvider);
     final streakAsync = ref.watch(streakProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -66,9 +67,14 @@ class HomeScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Sign out',
-            onPressed: () => _confirmSignOut(context, ref),
+            icon: const Icon(Icons.emoji_events_outlined),
+            tooltip: 'Badges',
+            onPressed: () => context.pushNamed('badges'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+            onPressed: () => context.pushNamed('settings'),
           ),
         ],
       ),
@@ -160,34 +166,70 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            // Quick actions
+            // Quick actions — 3 rows of 2
             const Text(
               'Explore',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _ActionTile(
-                    icon: Icons.auto_awesome_rounded,
-                    label: 'AI Workout',
-                    subtitle: 'Generate a plan',
-                    color: Colors.deepPurple,
-                    onTap: () => context.goNamed('generateWorkout'),
-                  ),
+            _QuickActionRow(
+              tiles: [
+                _ActionTileData(
+                  icon: Icons.auto_awesome_rounded,
+                  label: 'AI Workout',
+                  subtitle: 'Generate a plan',
+                  color: Colors.deepPurple,
+                  route: 'generateWorkout',
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _ActionTile(
-                    icon: Icons.menu_book_rounded,
-                    label: 'Exercises',
-                    subtitle: 'Browse library',
-                    color: AppTheme.secondaryBlue,
-                    onTap: () => context.goNamed('exerciseLibrary'),
-                  ),
+                _ActionTileData(
+                  icon: Icons.menu_book_rounded,
+                  label: 'Exercises',
+                  subtitle: 'Browse library',
+                  color: AppTheme.secondaryBlue,
+                  route: 'exerciseLibrary',
                 ),
               ],
+              onTap: (route) => context.pushNamed(route),
+            ),
+            const SizedBox(height: 10),
+            _QuickActionRow(
+              tiles: [
+                _ActionTileData(
+                  icon: Icons.show_chart_rounded,
+                  label: 'Progress',
+                  subtitle: 'Charts & trends',
+                  color: AppTheme.primaryGreen,
+                  route: 'progress',
+                ),
+                _ActionTileData(
+                  icon: Icons.restaurant_menu_rounded,
+                  label: 'Nutrition',
+                  subtitle: 'Track your diet',
+                  color: Colors.teal,
+                  route: 'nutrition',
+                ),
+              ],
+              onTap: (route) => context.pushNamed(route),
+            ),
+            const SizedBox(height: 10),
+            _QuickActionRow(
+              tiles: [
+                _ActionTileData(
+                  icon: Icons.smart_toy_rounded,
+                  label: 'AI Coach',
+                  subtitle: 'Ask anything',
+                  color: Colors.indigo,
+                  route: 'fitnessCoach',
+                ),
+                _ActionTileData(
+                  icon: Icons.emoji_events_rounded,
+                  label: 'My PRs',
+                  subtitle: 'Personal records',
+                  color: AppTheme.accentOrange,
+                  route: 'personalRecords',
+                ),
+              ],
+              onTap: (route) => context.pushNamed(route),
             ),
             const SizedBox(height: 24),
 
@@ -223,7 +265,7 @@ class HomeScreen extends ConsumerWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 28),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.cardTheme.color,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.grey.shade200),
                     ),
@@ -266,31 +308,11 @@ class HomeScreen extends ConsumerWidget {
       ),
     );
   }
-
-  void _confirmSignOut(BuildContext context, WidgetRef ref) {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text('You can sign back in any time.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ref.read(authNotifierProvider.notifier).signOut();
-            },
-            style: TextButton.styleFrom(foregroundColor: AppTheme.errorRed),
-            child: const Text('Sign Out'),
-          ),
-        ],
-      ),
-    );
-  }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Start Workout CTA card
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _StartWorkoutCard extends StatelessWidget {
   final VoidCallback onTap;
@@ -321,7 +343,7 @@ class _StartWorkoutCard extends StatelessWidget {
                 height: 52,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(Icons.play_arrow_rounded,
@@ -343,7 +365,9 @@ class _StartWorkoutCard extends StatelessWidget {
                     SizedBox(height: 2),
                     Text(
                       'Log sets, reps and weights',
-                      style: TextStyle(fontSize: 13, color: Colors.white70),
+                      style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white70),
                     ),
                   ],
                 ),
@@ -356,6 +380,10 @@ class _StartWorkoutCard extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Stat cards
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
   final IconData icon;
@@ -372,10 +400,11 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
       ),
@@ -408,61 +437,92 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _ActionTile extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// Quick action tiles
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _ActionTileData {
   final IconData icon;
   final String label;
   final String subtitle;
   final Color color;
-  final VoidCallback onTap;
+  final String route;
 
-  const _ActionTile({
+  const _ActionTileData({
     required this.icon,
     required this.label,
     required this.subtitle,
     required this.color,
-    required this.onTap,
+    required this.route,
   });
+}
+
+class _QuickActionRow extends StatelessWidget {
+  final List<_ActionTileData> tiles;
+  final ValueChanged<String> onTap;
+
+  const _QuickActionRow({required this.tiles, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    return Row(
+      children: tiles
+          .expand((tile) => [
+                Expanded(child: _ActionTile(data: tile, onTap: onTap)),
+                if (tile != tiles.last) const SizedBox(width: 10),
+              ])
+          .toList(),
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final _ActionTileData data;
+  final ValueChanged<String> onTap;
+
+  const _ActionTile({required this.data, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
+        onTap: () => onTap(data.route),
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardTheme.color,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.grey.shade200),
           ),
           child: Row(
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 38,
+                height: 38,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
+                  color: data.color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(11),
                 ),
-                child: Icon(icon, size: 22, color: color),
+                child: Icon(data.icon, size: 20, color: data.color),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      label,
+                      data.label,
                       style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600),
+                          fontSize: 13, fontWeight: FontWeight.w600),
                     ),
                     Text(
-                      subtitle,
+                      data.subtitle,
                       style: TextStyle(
-                          fontSize: 11, color: Colors.grey.shade600),
+                          fontSize: 10, color: Colors.grey.shade600),
                     ),
                   ],
                 ),
@@ -474,6 +534,10 @@ class _ActionTile extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Workout history card
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _WorkoutHistoryCard extends StatelessWidget {
   final WorkoutEntity workout;
@@ -487,12 +551,13 @@ class _WorkoutHistoryCard extends StatelessWidget {
     final durationLabel = workout.durationMinutes > 0
         ? '${workout.durationMinutes.round()} min'
         : '—';
+    final theme = Theme.of(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
       ),
