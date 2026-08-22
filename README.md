@@ -10,12 +10,26 @@
 [![Material 3](https://img.shields.io/badge/Material_3-Design-757575?style=for-the-badge&logo=materialdesign&logoColor=white)](https://m3.material.io)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-**FitX** is a full-featured, offline-first fitness tracker built with Flutter.  
-Log workouts, track nutrition & body metrics, earn achievements, and let an AI coach generate personalized plans — all without an internet connection.
+**FitX** is a comprehensive, offline-first gym & fitness powerhouse built with Flutter.  
+Log workouts, track macros & hydration, compete on community leaderboards, generate smart routines, and receive automated post-workout reviews from an AI coach.
 
-[Getting Started](#-getting-started) · [Features](#-features) · [Architecture](#-architecture) · [Roadmap](#-roadmap)
+[Getting Started](#-getting-started) · [Features](#-features) · [Navigation](#-navigation-tabs) · [Architecture](#-architecture) · [Roadmap](#-roadmap)
 
 </div>
+
+---
+
+## 📱 Navigation Tabs
+
+FitX features a persistent 5-section bottom navigation bar that preserves state seamlessly across your fitness journey:
+
+| Tab | Focus Area | Highlights |
+|---|---|---|
+| **🏠 Home** | Dashboard & Metrics | Streaks, calories burned, quick-start workouts & feature shortcuts |
+| **🏆 Leaderboard** | Community & Rankings | 🥇 Top-3 podium, weekly/monthly/all-time ranks & XP leaderboards |
+| **🏋️ Workout** | Routines & Templates | Push/Pull/Legs/Full-Body routines, custom template creator & logger |
+| **🥗 Nutrition** | Diet & Hydration | Macro tracker, animated Water Intake Tracker & AI Meal Suggestions |
+| **🤖 AI Coach** | Smart Assistant | Conversational fitness coach for workout, diet & recovery guidance |
 
 ---
 
@@ -25,74 +39,62 @@ Log workouts, track nutrition & body metrics, earn achievements, and let an AI c
 <tr>
 <td width="50%">
 
-### 🏋️ Workout Logging
+### 🏋️ Workout Logging & Templates
 - Build workouts from a library of **30+ exercises**
-- Adjust sets, reps & weight with intuitive steppers
-- Live session timer with rest-timer notifications
-- Full workout history with detail view
+- Pre-built **Workout Templates** (Push, Pull, Legs, Upper, Full Body)
+- Save and launch custom workout templates with one tap
+- Live session timer with rest-timer alerts & PR tracking
+- Full workout history with detailed exercise breakdown
 
 </td>
 <td width="50%">
 
-### 🤖 AI Workout Generator
-- Pick a goal: **build muscle · lose weight · get strong · endurance**
-- Select muscle focus, available equipment & duration
-- Template engine builds a complete plan instantly
-- One tap to start the generated plan as a logged workout
+### 🧠 AI Workout Review & Substitution
+- **Post-Workout Review** — Automated AI scoring out of 10, volume overload check, muscle balance & recovery estimates
+- **Exercise Substitution AI** — Smart biomechanical alternatives (Dumbbells, Cables, Machines, Bodyweight)
+- **AI Workout Generator** — Instant routine creation tailored to equipment, duration & fitness goals
 
 </td>
 </tr>
 <tr>
 <td>
 
-### 📊 Progress & Analytics
-- **fl_chart**-powered graphs for weight & volume over time
-- Body metrics tracking (weight, body fat %, measurements)
-- Personal records board for every exercise
-- Day-streak & calorie stats on the home dashboard
+### 💧 Water & Nutrition Tracker
+- **Water Intake Tracker** — Quick-add logging (`+250ml`, `+500ml`, `Custom`), animated progress & custom goals
+- **AI Meal Suggestions** — Instant recipes filling remaining daily calorie & protein targets
+- Macro dashboard (calories, protein, carbs, fat) with Indian food database
 
 </td>
 <td>
 
-### 🥗 Nutrition Tracking
-- Daily macro dashboard (calories, protein, carbs, fat)
-- AI-powered Indian food database with search
-- Meal logging (breakfast, lunch, dinner, snacks)
-- Per-meal breakdown & daily totals
+### 🏆 Gamification & Leaderboard
+- **Community Leaderboard** — 🥇 Gold, 🥈 Silver, 🥉 Bronze podium across XP, volume & streaks
+- **Weekly Challenges** — Consistency Crusher, Hydro Champion, Tonnage Titan with claimable XP
+- **Achievement Badges** — Visual milestones for workouts, tonnage & streaks
 
 </td>
 </tr>
 <tr>
 <td>
 
-### 🏆 Gamification & Badges
-- Unlock achievement badges for milestones
-- Track workout streaks & consistency
-- Visual badge gallery with progress indicators
-- Motivational system tied to real activity data
+### 📊 Progress & Summary Reports
+- **Weekly & Monthly Summary Reports** — Visual consistency scores, muscle volume breakdown & PDF report sharing
+- **fl_chart** interactive weight & volume graphs
+- Body metrics tracker (weight, body fat %, measurements)
+- Exercise-by-exercise Personal Records (1RM) tracker
 
 </td>
 <td>
 
-### ⚙️ Settings & Export
-- Light & dark theme toggle
-- Export workout history to **PDF** via `pdf` package
-- Share workouts with `share_plus`
-- Pluggable backend architecture for future cloud sync
+### ⏰ Smart Notifications & Settings
+- **Daily Workout Reminders** — Native time-picker scheduling
+- **Inactivity Smart Nudge** — Motivational reminders after 3 days of inactivity
+- Light & dark Material 3 theme switcher
+- CSV data export & PDF report sharing via `share_plus`
 
 </td>
 </tr>
 </table>
-
-<details>
-<summary><strong>🔍 More highlights</strong></summary>
-
-- **Exercise Library** — browse by muscle group (chest, back, legs, shoulders, arms, core, cardio), view form cues, default parameters, and detailed descriptions
-- **AI Fitness Coach** — conversational chat interface powered by Gemini for on-demand fitness advice
-- **Auth** — local sign-up / sign-in with email & password, plus a one-tap **demo account** for instant exploration
-- **Atomic Design UI** — shared components built with an atoms → molecules → organisms hierarchy for consistency
-
-</details>
 
 ---
 
@@ -109,148 +111,105 @@ Log workouts, track nutrition & body metrics, earn achievements, and let an AI c
 
 ```bash
 # Clone the repo
-git clone https://github.com/cbashray/fitx.git
-cd fitx
+git clone https://github.com/cbashray/FitX.git
+cd FitX
 
 # Install dependencies
 flutter pub get
 
-# Launch on any platform
+# Launch on connected device, emulator, or web
 flutter run
 ```
 
-> **Platforms:** Android · iOS · macOS · Web  
-> **No backend or API keys needed** — everything works offline out of the box.
+> **Platforms:** Android · iOS · Web · macOS  
+> **No backend or API keys required** — all features are operational offline out of the box with seeded storage.
 
 ### Demo Account
 
-Tap **"Try Demo Account"** on the sign-in screen to explore instantly, or create your own account.
+Tap **"Try Demo Account"** on the sign-in screen to explore with pre-populated workout data and personal records.
 
 ---
 
 ## 🏗 Architecture
 
-FitX follows a **feature-first clean architecture** with clear separation of concerns:
+FitX follows a **feature-first clean architecture** with Riverpod for reactive state management and GoRouter for persistent tab routing:
 
 ```
 lib/
-├── main.dart                          # App entry → ProviderScope → MaterialApp.router
+├── main.dart                          # Entrypoint → ProviderScope → MaterialApp.router
 ├── core/
-│   ├── constants/                     # App-wide constants & feature flags
-│   ├── di/                            # Dependency injection setup
-│   ├── errors/                        # Failure types
-│   ├── providers/                     # Repository providers (DI)
-│   ├── routers/                       # go_router config + auth-aware redirects
+│   ├── constants/                     # Global constants & feature configs
+│   ├── providers/                     # Global repository & service providers
+│   ├── routers/                       # go_router StatefulShellRoute config
+│   ├── services/                      # NotificationService (local alarms & nudges)
 │   ├── theme/                         # Light & dark Material 3 themes
-│   └── utils/                         # String / list extensions
+│   └── utils/                         # Formatter & calculation extensions
 └── features/
-    ├── auth/                          # Local auth (SharedPreferences-backed)
-    ├── home/                          # Dashboard: stats, history, quick actions
-    ├── workouts/                      # Workout logging, history & personal records
-    ├── exercise_library/              # 30+ seeded exercises, browse & detail
-    ├── progress/                      # Charts (fl_chart) & body metrics
-    ├── nutrition/                     # Daily macros, food search & meal logging
-    ├── settings/                      # Theme toggle, export to PDF
-    ├── shared/                        # Shared UI (atoms / molecules / organisms)
-    │   └── gamification/              # Badge & achievement engine
+    ├── auth/                          # Local auth (SharedPreferences)
+    ├── home/                          # Home dashboard & quick actions
+    ├── workouts/                      # Logging, templates, PRs, review & substitution
+    ├── exercise_library/              # Exercise catalog, cues & muscle tags
+    ├── progress/                      # Charts (fl_chart), body metrics & summary reports
+    ├── nutrition/                     # Food log, water intake & AI meal suggestions
+    ├── shared/                        # Shared UI, badges, challenges & leaderboards
     └── ai/
-        ├── adaptive_workout/          # AI workout plan generator
-        ├── fitness_coach/             # Conversational AI coach (Gemini)
-        ├── form_correction/           # 🚧 Camera-based form analysis
-        └── indian_food_ai/            # 🚧 AI food recognition
+        ├── adaptive_workout/          # Goal-based AI routine generator
+        └── fitness_coach/             # Conversational AI assistant
 ```
 
-Each feature is self-contained with three layers:
-
-```
-feature/
-├── domain/          # Entities & repository interfaces (contracts)
-├── data/            # Repository implementations (SharedPreferences / API)
-└── presentation/    # Providers (Riverpod) & screens (Flutter widgets)
-```
+Each feature is cleanly divided into three layers:
+- **`domain/`**: Pure Dart models, entities & repository interfaces.
+- **`data/`**: Repository implementations (local storage, SharedPreferences, cache).
+- **`presentation/`**: Riverpod providers, UI widgets, and reactive screens.
 
 ### Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| **Framework** | Flutter — Material 3 with light + dark themes |
-| **State Management** | Riverpod (`flutter_riverpod`) |
-| **Navigation** | `go_router` with auth-aware redirects |
-| **Persistence** | `shared_preferences` (JSON-encoded local storage) |
-| **Charts** | `fl_chart` for progress visualization |
-| **AI** | `google_generative_ai` (Gemini) for coach & workout gen |
-| **Export** | `pdf` + `share_plus` + `path_provider` |
-| **Notifications** | `flutter_local_notifications` (rest timer alerts) |
-| **IDs** | `uuid` for unique entity identification |
+| **Framework** | Flutter 3.24+ (Material 3 with custom dark theme) |
+| **State Management** | Flutter Riverpod 2.6 (`AsyncNotifier`, `NotifierProvider`) |
+| **Navigation** | `go_router` (`StatefulShellRoute.indexedStack`) |
+| **Persistence** | `shared_preferences` (JSON persistence) |
+| **Visual Charts** | `fl_chart` for trend and volume graphs |
+| **Reports & Export** | `pdf` + `share_plus` + `path_provider` |
+| **Notifications** | `flutter_local_notifications` (reminders & nudges) |
+| **Identifiers** | `uuid` for unique entity IDs |
 | **CI** | GitHub Actions (`dart.yml` workflow) |
-
----
-
-## 🔌 Swapping in a Real Backend
-
-The UI only talks to repository **interfaces** — never to concrete implementations:
-
-```
-AuthRepository  ·  WorkoutRepository  ·  ExerciseRepository  ·  AdaptiveWorkoutRepository
-```
-
-To connect Firebase, Supabase, or any backend:
-
-1. Create a new implementation of the interface  
-   (e.g., `SupabaseAuthRepository implements AuthRepository`)
-2. Swap the provider in [`app_providers.dart`](lib/core/providers/app_providers.dart)
-
-**Zero changes** to screens or providers required.
 
 ---
 
 ## 🗺 Roadmap
 
 ### ✅ Completed
-- [x] Workout logging & exercise library (30+ exercises)
-- [x] AI workout generator (goal & equipment tailored)
-- [x] Progress charts (`fl_chart`) & body metrics
-- [x] Nutrition tracking & macro dashboard
-- [x] AI fitness coach chat (Gemini)
-- [x] Gamification & achievement badges
-- [x] PDF workout history export & sharing
-- [x] Light & dark Material 3 themes
+- [x] **5-Tab Navigation Bar** (Home, Leaderboard, Workout, Nutrition, AI Coach)
+- [x] **Workout Logging & PR Tracker** (Estimated 1RM, rest timer, volume calculation)
+- [x] **Workout Templates** (Push, Pull, Legs, Upper, Full Body & custom creator)
+- [x] **Exercise Substitution AI** (Biomechanical alternative recommendations)
+- [x] **AI Workout Review** (Automated post-workout scoring, volume & recovery analysis)
+- [x] **Water Intake Tracker** (Animated progress, quick-add cups & custom daily goals)
+- [x] **AI Meal Suggestions** (Smart recipes filling remaining calorie & protein targets)
+- [x] **Weekly Challenges & Leaderboards** (Community podium 🥇🥈🥉 and XP quests)
+- [x] **Workout Reminders & Inactivity Nudges** (Configurable local notifications)
+- [x] **Weekly & Monthly Summary Reports** (Visual KPI metrics & PDF report export)
+- [x] **AI Fitness Coach** (Conversational assistant with quick-prompts)
+- [x] **Progress & Body Metrics** (`fl_chart` weight/volume tracking)
+- [x] **Light & Dark Themes** (Tailored dark mode palette)
 
 ### 🚀 Upcoming Features
-
-#### 💧 Hydration & Nutrition
-- [ ] **Water Intake Tracker** — Daily water logging with quick-add cups & hydration goals
-- [ ] **AI Meal Suggestions** — Smart recipe and meal recommendations tailored to macro targets
-- [ ] **AI Food Recognition** — Log meals by taking photos with camera
-
-#### 🏋️ Workout Enhancements & Smart AI
-- [ ] **Workout Templates** — Save, customize, and reuse favourite workout routines
-- [ ] **Exercise Substitution AI** — Suggest alternative exercises based on available equipment or muscle fatigue
-- [ ] **AI Workout Review** — Post-workout AI feedback analyzing volume, intensity, and progression
-- [ ] **Camera Form Correction** — Real-time pose & form analysis during lifts
-
-#### 🏆 Community & Gamification
-- [ ] **Weekly Challenges** — Community & personal fitness quests to earn exclusive badges
-- [ ] **Leaderboards** — Compete with friends on volume, consistency streaks, and challenge scores
-
-#### ⏰ Smart Notifications & Habits
-- [ ] **Workout Reminders** — Customizable scheduling and rest-day alarms
-- [ ] **Inactivity Nudge** — Smart notifications to keep streaks alive and motivate movement
-
-#### 📈 Reports & Integrations
-- [ ] **Weekly & Monthly Summary Reports** — Automated PDF/visual breakdown of training volume, PRs & nutrition
-- [ ] **Cloud Sync** — Multi-device synchronization via Supabase / Firebase
-- [ ] **Health & Wearables** — Apple Health, Google Fit, and smartwatch integrations
+- [ ] **Camera Form Correction** — Real-time computer vision pose & form analysis
+- [ ] **AI Food Camera Recognition** — Snap a photo of your meal to estimate macros
+- [ ] **Cloud Sync** — Multi-device synchronization via Firebase / Supabase
+- [ ] **Wearables Integration** — Apple Health & Google Health Connect sync
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow the existing architecture patterns:
+Contributions are welcome! Please follow clean architecture guidelines:
 
 1. **Fork** the repo
 2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+3. **Commit** your changes (`git commit -m 'feat: add amazing feature'`)
 4. **Push** to the branch (`git push origin feature/amazing-feature`)
 5. **Open** a Pull Request
 
@@ -259,8 +218,6 @@ Contributions are welcome! Please follow the existing architecture patterns:
 ## 📄 License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-
----
 
 <div align="center">
 
