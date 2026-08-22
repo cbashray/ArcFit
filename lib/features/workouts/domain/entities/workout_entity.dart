@@ -32,6 +32,10 @@ class WorkoutEntity {
     required this.updatedAt,
   });
 
+  /// Total tonnage lifted in kg: weight * sets * reps across all exercises
+  double get totalVolume => exercises.fold<double>(
+        0, (sum, ex) => sum + ((ex.weight ?? 0) * ex.sets * ex.reps));
+
   factory WorkoutEntity.fromMap(Map<String, dynamic> map) {
     final List<WorkoutExerciseEntity> exList = [];
     if (map['exercises'] != null) {

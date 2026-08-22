@@ -10,12 +10,18 @@ import '../../features/exercise_library/data/repos/local_exercise_repository.dar
 import '../../features/exercise_library/domain/repos/exercise_repository.dart';
 import '../../features/workouts/data/repos/local_personal_record_repository.dart';
 import '../../features/workouts/data/repos/local_workout_repository.dart';
+import '../../core/services/notification_service.dart';
 import '../../features/workouts/domain/repos/personal_record_repository.dart';
 import '../../features/workouts/domain/repos/workout_repository.dart';
 
 /// Shared preferences (initialized in main before runApp)
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError('Initialized via override in main()');
+});
+
+/// Notification service
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  return NotificationService(ref.watch(sharedPreferencesProvider));
 });
 
 /// Repositories
