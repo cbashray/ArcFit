@@ -2,16 +2,66 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/providers/app_providers.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  late bool _reminderEnabled;
+  late int _reminderHour;
+  late int _reminderMinute;
+  late bool _nudgeEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    final notif = ref.read(notificationServiceProvider);
+    _reminderEnabled = notif.isReminderEnabled;
+    _reminderHour = notif.reminderHour;
+    _reminderMinute = notif.reminderMinute;
+    _nudgeEnabled = notif.isInactivityNudgeEnabled;
+  }
+
+  Future<void> _pickReminderTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: _reminderHour, minute: _reminderMinute),
+    );
+    if (picked != null) {
+      final notif = ref.read(notificationServiceProvider);
+      await notif.setReminderTime(picked.hour, picked.minute);
+      setState(() {
+        _reminderHour = picked.hour;
+        _reminderMinute = picked.minute;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Reminder set for ${picked.format(context)} daily ⏰',
+            ),
+            backgroundColor: AppTheme.primaryGreen,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
+    final notif = ref.watch(notificationServiceProvider);
+
+    final timeOfDay = TimeOfDay(hour: _reminderHour, minute: _reminderMinute);
+    final formattedTime = timeOfDay.format(context);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
@@ -19,7 +69,7 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         children: [
           // ─── Appearance ───────────────────────────────────────────────────
-          _SectionHeader(label: 'Appearance'),
+          const _SectionHeader(label: 'Appearance'),
           Card(
             child: Column(
               children: [
@@ -39,40 +89,104 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
-          // ─── Workout ──────────────────────────────────────────────────────
-          _SectionHeader(label: 'Workout'),
+          // ─── Notifications & Reminders ──────────────────────────────────
+          const _SectionHeader(label: 'Reminders & Motivation'),
           Card(
             child: Column(
               children: [
                 _SettingsTile(
-                  icon: Icons.timer_outlined,
-                  iconColor: AppTheme.accentOrange,
-                  title: 'Rest Timer',
-                  subtitle: 'Shown in workout logging screen',
-                  trailing: const Icon(Icons.chevron_right_rounded,
-                      color: Colors.grey),
+                  icon: Icons.notifications_active_outlined,
+                  iconColor: AppTheme.primaryGreen,
+                  title: 'Daily Workout Reminder',
+                  subtitle: _reminderEnabled
+                      ? 'Scheduled for $formattedTime'
+                      : 'Disabled',
+                  trailing: Switch.adaptive(
+                    value: _reminderEnabled,
+                    activeTrackColor: AppTheme.primaryGreen,
+                    onChanged: (val) async {
+                      await notif.setReminderEnabled(val);
+                      setState(() => _reminderEnabled = val);
+                    },
+                  ),
+                  onTap: _reminderEnabled ? _pickReminderTime : null,
                 ),
                 const Divider(height: 1, indent: 56),
                 _SettingsTile(
-                  icon: Icons.calculate_outlined,
-                  iconColor: AppTheme.secondaryBlue,
-                  title: '1RM Calculator',
-                  subtitle: 'Available in every exercise card',
-                  trailing: const Icon(Icons.chevron_right_rounded,
-                      color: Colors.grey),
+                  icon: Icons.flash_on_rounded,
+                  iconColor: AppTheme.accentOrange,
+                  title: 'Inactivity Smart Nudge',
+                  subtitle: 'Sends a motivational alert if inactive for 3 days',
+                  trailing: Switch.adaptive(
+                    value: _nudgeEnabled,
+                    activeTrackColor: AppTheme.accentOrange,
+                    onChanged: (val) async {
+                      await notif.setInactivityNudgeEnabled(val);
+                      setState(() => _nudgeEnabled = val);
+                    },
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
 
-          // ─── Data ─────────────────────────────────────────────────────────
-          _SectionHeader(label: 'Data'),
+          // ─── Workout ──────────────────────────────────────────────────────
+          const _SectionHeader(label: 'Workout & Training'),
           Card(
             child: Column(
               children: [
                 _SettingsTile(
+                  icon: Icons.bookmark_border_rounded,
+                  iconColor: Colors.deepPurple,
+                  title: 'Workout Templates',
+                  subtitle: 'Manage custom & pre-built routines',
+                  trailing: const Icon(Icons.chevron_right_rounded,
+                      color: Colors.grey),
+                  onTap: () => context.pushNamed('workoutTemplates'),
+                ),
+                const Divider(height: 1, indent: 56),
+                _SettingsTile(
                   icon: Icons.emoji_events_outlined,
+                  iconColor: AppTheme.accentOrange,
+                  title: 'Weekly Challenges',
+                  subtitle: 'View missions & claim XP rewards',
+                  trailing: const Icon(Icons.chevron_right_rounded,
+                      color: Colors.grey),
+                  onTap: () => context.pushNamed('challenges'),
+                ),
+                const Divider(height: 1, indent: 56),
+                _SettingsTile(
+                  icon: Icons.leaderboard_outlined,
+                  iconColor: AppTheme.secondaryBlue,
+                  title: 'Community Leaderboard',
+                  subtitle: 'See top athlete rankings & podium',
+                  trailing: const Icon(Icons.chevron_right_rounded,
+                      color: Colors.grey),
+                  onTap: () => context.pushNamed('leaderboard'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // ─── Data & Reports ───────────────────────────────────────────────
+          const _SectionHeader(label: 'Data & Analytics'),
+          Card(
+            child: Column(
+              children: [
+                _SettingsTile(
+                  icon: Icons.pie_chart_outline_rounded,
+                  iconColor: Colors.deepPurple,
+                  title: 'Weekly & Monthly Reports',
+                  subtitle: 'Comprehensive performance breakdown & PDF',
+                  trailing: const Icon(Icons.chevron_right_rounded,
+                      color: Colors.grey),
+                  onTap: () => context.pushNamed('summaryReport'),
+                ),
+                const Divider(height: 1, indent: 56),
+                _SettingsTile(
+                  icon: Icons.military_tech_outlined,
                   iconColor: AppTheme.accentOrange,
                   title: 'Personal Records',
                   subtitle: 'View all your best lifts',
@@ -85,7 +199,7 @@ class SettingsScreen extends ConsumerWidget {
                   icon: Icons.download_outlined,
                   iconColor: AppTheme.primaryGreen,
                   title: 'Export Workout History',
-                  subtitle: 'Download as CSV or PDF',
+                  subtitle: 'Download as CSV format',
                   trailing: const Icon(Icons.chevron_right_rounded,
                       color: Colors.grey),
                   onTap: () => context.pushNamed('export'),
@@ -96,22 +210,22 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 20),
 
           // ─── About ────────────────────────────────────────────────────────
-          _SectionHeader(label: 'About'),
+          const _SectionHeader(label: 'About'),
           Card(
             child: Column(
               children: [
-                _SettingsTile(
+                const _SettingsTile(
                   icon: Icons.info_outline_rounded,
                   iconColor: Colors.grey,
                   title: 'FitX',
                   subtitle: 'Version 1.0.0 — AI-powered fitness tracker',
                 ),
                 const Divider(height: 1, indent: 56),
-                _SettingsTile(
+                const _SettingsTile(
                   icon: Icons.code_rounded,
                   iconColor: Colors.grey,
                   title: 'Built with Flutter & Riverpod',
-                  subtitle: 'Feature-first clean architecture',
+                  subtitle: 'Clean feature-first architecture',
                 ),
               ],
             ),
@@ -126,8 +240,7 @@ class SettingsScreen extends ConsumerWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: AppTheme.errorRed,
               side: const BorderSide(color: AppTheme.errorRed),
-              padding:
-                  const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 14),
             ),
           ),
           const SizedBox(height: 16),
@@ -225,10 +338,8 @@ class _SettingsTile extends StatelessWidget {
         child: Icon(icon, size: 18, color: iconColor),
       ),
       title: Text(title,
-          style:
-              const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-      subtitle: Text(subtitle,
-          style: const TextStyle(fontSize: 12)),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
       trailing: trailing,
       onTap: onTap,
     );

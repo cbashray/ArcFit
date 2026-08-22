@@ -176,6 +176,14 @@ class ActiveWorkoutNotifier extends Notifier<ActiveWorkout?> {
     );
   }
 
+  void addDraftExercise(DraftExercise exercise) {
+    final current = state;
+    if (current == null) return;
+    state = current.copyWith(
+      exercises: [...current.exercises, exercise],
+    );
+  }
+
   /// Add an exercise from a generated AI plan.
   void addExerciseFromPlan(WorkoutPlanExerciseEntity planExercise) {
     final current = state;

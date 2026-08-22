@@ -9,6 +9,8 @@ import '../../../exercise_library/presentation/providers/exercise_providers.dart
 import '../providers/workout_providers.dart';
 import '../../widgets/rest_timer_widget.dart';
 import '../../widgets/one_rm_calculator_widget.dart';
+import '../../widgets/exercise_substitution_sheet.dart';
+import '../../widgets/ai_workout_review_sheet.dart';
 
 class WorkoutLoggingScreen extends ConsumerStatefulWidget {
   const WorkoutLoggingScreen({super.key});
@@ -90,36 +92,18 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     if (!mounted) return;
 
     if (result.workout != null) {
-      // Show PR celebration if any new records
-      if (result.newPRs.isNotEmpty) {
-        final prNames = result.newPRs.join(', ');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Text('🏆 ', style: TextStyle(fontSize: 20)),
-                Expanded(
-                  child: Text(
-                    'New PR${result.newPRs.length > 1 ? "s" : ""}! $prNames',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppTheme.accentOrange,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Workout saved: ${result.workout!.title}'),
-            backgroundColor: AppTheme.primaryGreen,
-          ),
-        );
-      }
+      // Show AI Workout Review modal
+      showAiWorkoutReviewModal(
+        context,
+        result.workout!,
+        newPRs: result.newPRs,
+        onDismissed: () {
+          if (mounted) context.goNamed('home');
+        },
+      );
+    } else {
+      context.goNamed('home');
     }
-    context.goNamed('home');
   }
 
   void _discardWorkout() {
@@ -501,6 +485,13 @@ class _DraftExerciseCard extends StatelessWidget {
                       weight: draft.weight,
                       isWarmup: !draft.isWarmup,
                     ));
+                  } else if (value == 'substitute') {
+                    showExerciseSubstitutionModal(
+                      context: context,
+                      exerciseName: draft.name,
+                      muscleGroup: draft.muscleGroup,
+                      exerciseIndex: index,
+                    );
                   } else if (value == 'one_rm') {
                     onShowOneRm();
                   } else if (value == 'remove') {
@@ -508,6 +499,17 @@ class _DraftExerciseCard extends StatelessWidget {
                   }
                 },
                 itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'substitute',
+                    child: Row(
+                      children: [
+                        Icon(Icons.auto_awesome_rounded,
+                            size: 16, color: Colors.deepPurple),
+                        SizedBox(width: 8),
+                        Text('Substitute (AI)'),
+                      ],
+                    ),
+                  ),
                   PopupMenuItem(
                     value: 'warmup',
                     child: Row(

@@ -231,6 +231,46 @@ class HomeScreen extends ConsumerWidget {
               ],
               onTap: (route) => context.pushNamed(route),
             ),
+            const SizedBox(height: 10),
+            _QuickActionRow(
+              tiles: [
+                _ActionTileData(
+                  icon: Icons.bookmark_added_rounded,
+                  label: 'Templates',
+                  subtitle: 'Pre-built & custom',
+                  color: Colors.deepPurple,
+                  route: 'workoutTemplates',
+                ),
+                _ActionTileData(
+                  icon: Icons.flag_rounded,
+                  label: 'Challenges',
+                  subtitle: 'Weekly missions',
+                  color: Colors.deepOrange,
+                  route: 'challenges',
+                ),
+              ],
+              onTap: (route) => context.pushNamed(route),
+            ),
+            const SizedBox(height: 10),
+            _QuickActionRow(
+              tiles: [
+                _ActionTileData(
+                  icon: Icons.leaderboard_rounded,
+                  label: 'Leaderboard',
+                  subtitle: 'Podium & ranks',
+                  color: AppTheme.secondaryBlue,
+                  route: 'leaderboard',
+                ),
+                _ActionTileData(
+                  icon: Icons.analytics_rounded,
+                  label: 'Reports',
+                  subtitle: 'Weekly & Monthly',
+                  color: Colors.teal,
+                  route: 'summaryReport',
+                ),
+              ],
+              onTap: (route) => context.pushNamed(route),
+            ),
             const SizedBox(height: 24),
 
             // Recent workouts
