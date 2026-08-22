@@ -121,7 +121,7 @@ flutter pub get
 flutter run
 ```
 
-> **Platforms:** Android · iOS · Web · macOS  
+> **Platforms:** Android · Web  
 > **No backend or API keys required** — all features are operational offline out of the box with seeded storage.
 
 ### Demo Account
