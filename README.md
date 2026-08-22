@@ -206,20 +206,41 @@ To connect Firebase, Supabase, or any backend:
 
 ## 🗺 Roadmap
 
-- [x] Workout logging & exercise library
-- [x] AI workout generator
-- [x] Progress charts & body metrics
-- [x] Nutrition tracking
-- [x] AI fitness coach (Gemini)
-- [x] Gamification & badges
-- [x] PDF export & sharing
-- [x] Light & dark themes
-- [ ] Camera-based form correction
-- [ ] AI food recognition from photos
-- [ ] Cloud sync (Supabase / Firebase)
-- [ ] Social features & leaderboards
-- [ ] Apple Health / Google Fit integration
-- [ ] Wearable device support
+### ✅ Completed
+- [x] Workout logging & exercise library (30+ exercises)
+- [x] AI workout generator (goal & equipment tailored)
+- [x] Progress charts (`fl_chart`) & body metrics
+- [x] Nutrition tracking & macro dashboard
+- [x] AI fitness coach chat (Gemini)
+- [x] Gamification & achievement badges
+- [x] PDF workout history export & sharing
+- [x] Light & dark Material 3 themes
+
+### 🚀 Upcoming Features
+
+#### 💧 Hydration & Nutrition
+- [ ] **Water Intake Tracker** — Daily water logging with quick-add cups & hydration goals
+- [ ] **AI Meal Suggestions** — Smart recipe and meal recommendations tailored to macro targets
+- [ ] **AI Food Recognition** — Log meals by taking photos with camera
+
+#### 🏋️ Workout Enhancements & Smart AI
+- [ ] **Workout Templates** — Save, customize, and reuse favourite workout routines
+- [ ] **Exercise Substitution AI** — Suggest alternative exercises based on available equipment or muscle fatigue
+- [ ] **AI Workout Review** — Post-workout AI feedback analyzing volume, intensity, and progression
+- [ ] **Camera Form Correction** — Real-time pose & form analysis during lifts
+
+#### 🏆 Community & Gamification
+- [ ] **Weekly Challenges** — Community & personal fitness quests to earn exclusive badges
+- [ ] **Leaderboards** — Compete with friends on volume, consistency streaks, and challenge scores
+
+#### ⏰ Smart Notifications & Habits
+- [ ] **Workout Reminders** — Customizable scheduling and rest-day alarms
+- [ ] **Inactivity Nudge** — Smart notifications to keep streaks alive and motivate movement
+
+#### 📈 Reports & Integrations
+- [ ] **Weekly & Monthly Summary Reports** — Automated PDF/visual breakdown of training volume, PRs & nutrition
+- [ ] **Cloud Sync** — Multi-device synchronization via Supabase / Firebase
+- [ ] **Health & Wearables** — Apple Health, Google Fit, and smartwatch integrations
 
 ---
 
