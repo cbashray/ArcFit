@@ -147,7 +147,7 @@ class _FilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isSelected ? Colors.white : Colors.black87,
+            color: isSelected ? Colors.black87 : Colors.grey.shade700,
           ),
         ),
         selected: isSelected,

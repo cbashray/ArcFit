@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../exercise_library/presentation/providers/exercise_providers.dart';
 import '../providers/workout_providers.dart';
+import '../../widgets/rest_timer_widget.dart';
+import '../../widgets/one_rm_calculator_widget.dart';
 
 class WorkoutLoggingScreen extends ConsumerStatefulWidget {
   const WorkoutLoggingScreen({super.key});
@@ -24,7 +26,6 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-start a new workout if none is active.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (ref.read(activeWorkoutProvider) == null) {
         ref.read(activeWorkoutProvider.notifier).start();
@@ -46,7 +47,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       _titleController.text = active.title;
       _ticker?.cancel();
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (mounted) setState(() {}); // refresh elapsed time
+        if (mounted) setState(() {});
       });
     }
   }
@@ -85,16 +86,38 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       return;
     }
 
-    final saved = await ref.read(activeWorkoutProvider.notifier).finish();
+    final result = await ref.read(activeWorkoutProvider.notifier).finish();
     if (!mounted) return;
 
-    if (saved != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Workout saved: ${saved.title}'),
-          backgroundColor: AppTheme.primaryGreen,
-        ),
-      );
+    if (result.workout != null) {
+      // Show PR celebration if any new records
+      if (result.newPRs.isNotEmpty) {
+        final prNames = result.newPRs.join(', ');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Text('🏆 ', style: TextStyle(fontSize: 20)),
+                Expanded(
+                  child: Text(
+                    'New PR${result.newPRs.length > 1 ? "s" : ""}! $prNames',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppTheme.accentOrange,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Workout saved: ${result.workout!.title}'),
+            backgroundColor: AppTheme.primaryGreen,
+          ),
+        );
+      }
     }
     context.goNamed('home');
   }
@@ -147,19 +170,21 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
   Widget build(BuildContext context) {
     _syncTicker();
     final active = ref.watch(activeWorkoutProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Log Workout'),
         actions: [
-          if (active != null)
+          if (active != null) ...[
+            // Elapsed time
             Padding(
-              padding: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsets.only(right: 4),
               child: Row(
                 children: [
                   const Icon(Icons.timer_outlined,
                       size: 18, color: AppTheme.primaryGreen),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Text(
                     _elapsedLabel(),
                     style: const TextStyle(
@@ -170,6 +195,13 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                 ],
               ),
             ),
+            // Rest Timer button
+            IconButton(
+              icon: const Icon(Icons.hourglass_top_rounded),
+              tooltip: 'Rest Timer',
+              onPressed: () => showRestTimer(context),
+            ),
+          ],
         ],
       ),
       body: active == null
@@ -210,8 +242,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color:
-                                  AppTheme.primaryGreen.withValues(alpha: 0.1),
+                              color: AppTheme.primaryGreen
+                                  .withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -223,40 +255,22 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                               ),
                             ),
                           ),
+                          const Spacer(),
+                          // Working set / warm-up count
+                          if (active.exercises.isNotEmpty)
+                            Text(
+                              '${active.exercises.where((e) => !e.isWarmup).length} working · '
+                              '${active.exercises.where((e) => e.isWarmup).length} warmup',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade500),
+                            ),
                         ],
                       ),
                       const SizedBox(height: 12),
 
                       if (active.exercises.isEmpty)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 32),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.grey.shade300,
-                              style: BorderStyle.solid,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Icon(Icons.fitness_center,
-                                  size: 40, color: Colors.grey.shade300),
-                              const SizedBox(height: 8),
-                              Text(
-                                'No exercises yet',
-                                style: TextStyle(color: Colors.grey.shade600),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Tap "Add Exercise" to get started',
-                                style: TextStyle(
-                                    fontSize: 12, color: Colors.grey.shade500),
-                              ),
-                            ],
-                          ),
-                        )
+                        _buildEmptyState(theme)
                       else
                         ...List.generate(active.exercises.length, (index) {
                           final draft = active.exercises[index];
@@ -269,6 +283,12 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                             onRemoved: () => ref
                                 .read(activeWorkoutProvider.notifier)
                                 .removeExercise(index),
+                            onShowOneRm: () => showOneRmCalculator(
+                              context,
+                              initialWeight: draft.weight,
+                              initialReps: draft.reps,
+                              exerciseName: draft.name,
+                            ),
                           );
                         }),
                       const SizedBox(height: 12),
@@ -284,7 +304,8 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.primaryGreen,
                           side: BorderSide(
-                            color: AppTheme.primaryGreen.withValues(alpha: 0.5),
+                            color: AppTheme.primaryGreen
+                                .withValues(alpha: 0.5),
                           ),
                         ),
                       ),
@@ -296,7 +317,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
+                    color: theme.scaffoldBackgroundColor,
                     border: Border(
                       top: BorderSide(color: Colors.grey.shade200),
                     ),
@@ -328,31 +349,72 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
             ),
     );
   }
+
+  Widget _buildEmptyState(ThemeData theme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      decoration: BoxDecoration(
+        color: theme.cardTheme.color,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.fitness_center,
+              size: 40, color: Colors.grey.shade300),
+          const SizedBox(height: 8),
+          Text(
+            'No exercises yet',
+            style: TextStyle(color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Tap "Add Exercise" to get started',
+            style:
+                TextStyle(fontSize: 12, color: Colors.grey.shade500),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-/// One exercise in the active workout with editable sets/reps/weight.
+// ─────────────────────────────────────────────────────────────────────────────
+// Draft exercise card
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _DraftExerciseCard extends StatelessWidget {
   final int index;
   final DraftExercise draft;
   final ValueChanged<DraftExercise> onChanged;
   final VoidCallback onRemoved;
+  final VoidCallback onShowOneRm;
 
   const _DraftExerciseCard({
     required this.index,
     required this.draft,
     required this.onChanged,
     required this.onRemoved,
+    required this.onShowOneRm,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isWarmup = draft.isWarmup;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: isWarmup
+              ? AppTheme.accentOrange.withValues(alpha: 0.4)
+              : Colors.grey.shade200,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,15 +426,19 @@ class _DraftExerciseCard extends StatelessWidget {
                 height: 28,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                  color: isWarmup
+                      ? AppTheme.accentOrange.withValues(alpha: 0.15)
+                      : AppTheme.primaryGreen.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '${index + 1}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryGreen,
+                    color: isWarmup
+                        ? AppTheme.accentOrange
+                        : AppTheme.primaryGreen,
                   ),
                 ),
               ),
@@ -381,26 +447,110 @@ class _DraftExerciseCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      draft.name,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          draft.name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        if (isWarmup) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: AppTheme.accentOrange
+                                  .withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'WARM-UP',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.accentOrange,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     Text(
                       draft.muscleGroup,
-                      style:
-                          TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                      style: TextStyle(
+                          fontSize: 11, color: Colors.grey.shade600),
                     ),
                   ],
                 ),
               ),
-              IconButton(
-                icon: Icon(Icons.close, size: 18, color: Colors.grey.shade500),
-                tooltip: 'Remove exercise',
-                onPressed: onRemoved,
-                visualDensity: VisualDensity.compact,
+              // Warm-up toggle + overflow menu
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert,
+                    size: 18, color: Colors.grey.shade500),
+                onSelected: (value) {
+                  if (value == 'warmup') {
+                    onChanged(DraftExercise(
+                      exerciseId: draft.exerciseId,
+                      name: draft.name,
+                      muscleGroup: draft.muscleGroup,
+                      sets: draft.sets,
+                      reps: draft.reps,
+                      weight: draft.weight,
+                      isWarmup: !draft.isWarmup,
+                    ));
+                  } else if (value == 'one_rm') {
+                    onShowOneRm();
+                  } else if (value == 'remove') {
+                    onRemoved();
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'warmup',
+                    child: Row(
+                      children: [
+                        Icon(
+                          isWarmup
+                              ? Icons.fitness_center_rounded
+                              : Icons.local_fire_department_outlined,
+                          size: 16,
+                          color: AppTheme.accentOrange,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(isWarmup
+                            ? 'Mark as working set'
+                            : 'Mark as warm-up'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'one_rm',
+                    child: Row(
+                      children: [
+                        Icon(Icons.calculate_outlined,
+                            size: 16, color: AppTheme.secondaryBlue),
+                        SizedBox(width: 8),
+                        Text('Calculate 1RM'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem(
+                    value: 'remove',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete_outline,
+                            size: 16, color: AppTheme.errorRed),
+                        SizedBox(width: 8),
+                        Text('Remove',
+                            style: TextStyle(color: AppTheme.errorRed)),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -413,8 +563,15 @@ class _DraftExerciseCard extends StatelessWidget {
                   value: draft.sets,
                   min: 1,
                   max: 12,
-                  onChanged: (value) =>
-                      onChanged(_copyDraft(draft, sets: value)),
+                  onChanged: (value) => onChanged(DraftExercise(
+                    exerciseId: draft.exerciseId,
+                    name: draft.name,
+                    muscleGroup: draft.muscleGroup,
+                    sets: value,
+                    reps: draft.reps,
+                    weight: draft.weight,
+                    isWarmup: draft.isWarmup,
+                  )),
                 ),
               ),
               const SizedBox(width: 8),
@@ -424,8 +581,15 @@ class _DraftExerciseCard extends StatelessWidget {
                   value: draft.reps,
                   min: 1,
                   max: 50,
-                  onChanged: (value) =>
-                      onChanged(_copyDraft(draft, reps: value)),
+                  onChanged: (value) => onChanged(DraftExercise(
+                    exerciseId: draft.exerciseId,
+                    name: draft.name,
+                    muscleGroup: draft.muscleGroup,
+                    sets: draft.sets,
+                    reps: value,
+                    weight: draft.weight,
+                    isWarmup: draft.isWarmup,
+                  )),
                 ),
               ),
               const SizedBox(width: 8),
@@ -436,8 +600,15 @@ class _DraftExerciseCard extends StatelessWidget {
                   min: 0,
                   max: 500,
                   step: 5,
-                  onChanged: (value) =>
-                      onChanged(_copyDraft(draft, weight: value.toDouble())),
+                  onChanged: (value) => onChanged(DraftExercise(
+                    exerciseId: draft.exerciseId,
+                    name: draft.name,
+                    muscleGroup: draft.muscleGroup,
+                    sets: draft.sets,
+                    reps: draft.reps,
+                    weight: value.toDouble(),
+                    isWarmup: draft.isWarmup,
+                  )),
                 ),
               ),
             ],
@@ -446,25 +617,12 @@ class _DraftExerciseCard extends StatelessWidget {
       ),
     );
   }
-
-  DraftExercise _copyDraft(
-    DraftExercise draft, {
-    int? sets,
-    int? reps,
-    double? weight,
-  }) {
-    return DraftExercise(
-      exerciseId: draft.exerciseId,
-      name: draft.name,
-      muscleGroup: draft.muscleGroup,
-      sets: sets ?? draft.sets,
-      reps: reps ?? draft.reps,
-      weight: weight ?? draft.weight,
-    );
-  }
 }
 
-/// Compact - / value / + field.
+// ─────────────────────────────────────────────────────────────────────────────
+// Stepper field
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _StepperField extends StatelessWidget {
   final String label;
   final int value;
@@ -484,10 +642,13 @@ class _StepperField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FA),
+        color: theme.colorScheme.surface == Colors.white
+            ? const Color(0xFFF7F8FA)
+            : theme.colorScheme.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -552,7 +713,10 @@ class _StepButton extends StatelessWidget {
   }
 }
 
-/// Bottom sheet to pick exercises from the library.
+// ─────────────────────────────────────────────────────────────────────────────
+// Exercise picker sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _ExercisePickerSheet extends ConsumerStatefulWidget {
   const _ExercisePickerSheet();
 
@@ -561,7 +725,8 @@ class _ExercisePickerSheet extends ConsumerStatefulWidget {
       _ExercisePickerSheetState();
 }
 
-class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
+class _ExercisePickerSheetState
+    extends ConsumerState<_ExercisePickerSheet> {
   final _searchController = TextEditingController();
   String _query = '';
 
@@ -599,8 +764,8 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                   children: [
                     const Text(
                       'Add Exercise',
-                      style:
-                          TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.w700),
                     ),
                     const Spacer(),
                     IconButton(
@@ -616,7 +781,8 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                     prefixIcon: Icon(Icons.search),
                     isDense: true,
                   ),
-                  onChanged: (query) => setState(() => _query = query),
+                  onChanged: (query) =>
+                      setState(() => _query = query.toLowerCase()),
                 ),
               ],
             ),
@@ -635,7 +801,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                             e.name.toLowerCase().contains(_query) ||
                             e.muscleGroup
                                 .toLowerCase()
-                                .contains(_query.toLowerCase()))
+                                .contains(_query))
                         .toList();
 
                 if (filtered.isEmpty) {

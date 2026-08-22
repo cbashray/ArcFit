@@ -329,7 +329,7 @@ class _ChoiceChip extends StatelessWidget {
         style: TextStyle(
           fontSize: 13,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          color: isSelected ? Colors.white : Colors.black87,
+          color: isSelected ? Colors.black87 : Colors.grey.shade800,
         ),
       ),
       selected: isSelected,

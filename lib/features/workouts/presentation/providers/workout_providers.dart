@@ -1,10 +1,15 @@
-// Workout providers: history + active workout draft
+// Workout providers: history + active workout draft + personal records
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/app_providers.dart';
 import '../../../ai/adaptive_workout/domain/entities/workout_plan_entity.dart';
 import '../../../exercise_library/domain/entities/exercise_entity.dart';
+import '../../domain/entities/personal_record_entity.dart';
 import '../../domain/entities/workout_entity.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Workout History
+// ─────────────────────────────────────────────────────────────────────────────
 
 /// Saved workout history (refreshed after each save/delete).
 final workoutsProvider =
@@ -14,21 +19,79 @@ final workoutsProvider =
 class WorkoutsNotifier extends AsyncNotifier<List<WorkoutEntity>> {
   @override
   Future<List<WorkoutEntity>> build() {
-    return ref.watch(workoutRepositoryProvider).getRecentWorkouts(limit: 20);
+    return ref.watch(workoutRepositoryProvider).getRecentWorkouts(limit: 50);
   }
 
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
-      () => ref.read(workoutRepositoryProvider).getRecentWorkouts(limit: 20),
+      () => ref.read(workoutRepositoryProvider).getRecentWorkouts(limit: 50),
     );
   }
 
   Future<void> delete(String workoutId) async {
-    await ref.read(workoutRepositoryProvider).deleteWorkout(workoutId: workoutId);
+    await ref
+        .read(workoutRepositoryProvider)
+        .deleteWorkout(workoutId: workoutId);
     await refresh();
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Personal Records
+// ─────────────────────────────────────────────────────────────────────────────
+
+final personalRecordsProvider =
+    AsyncNotifierProvider<PersonalRecordsNotifier, List<PersonalRecordEntity>>(
+        PersonalRecordsNotifier.new);
+
+class PersonalRecordsNotifier
+    extends AsyncNotifier<List<PersonalRecordEntity>> {
+  @override
+  Future<List<PersonalRecordEntity>> build() {
+    return ref.watch(personalRecordRepositoryProvider).getAll();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(
+      () => ref.read(personalRecordRepositoryProvider).getAll(),
+    );
+  }
+
+  /// Returns the list of exercise names that got new PRs.
+  Future<List<String>> checkAndSaveNewPRs(
+      List<WorkoutExerciseEntity> exercises) async {
+    final repo = ref.read(personalRecordRepositoryProvider);
+    final newPRs = <String>[];
+
+    for (final ex in exercises) {
+      final weight = ex.weight ?? 0;
+      if (weight <= 0) continue;
+
+      final oneRM =
+          PersonalRecordEntity.calculateOneRepMax(weight, ex.reps);
+      final candidate = PersonalRecordEntity(
+        exerciseId: ex.exerciseId,
+        exerciseName: ex.exerciseName,
+        maxWeight: weight,
+        repsAtMaxWeight: ex.reps,
+        estimatedOneRepMax: oneRM,
+        achievedAt: DateTime.now(),
+      );
+
+      final isNew = await repo.upsert(candidate);
+      if (isNew) newPRs.add(ex.exerciseName);
+    }
+
+    if (newPRs.isNotEmpty) await refresh();
+    return newPRs;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Active Workout (Draft)
+// ─────────────────────────────────────────────────────────────────────────────
 
 /// A single exercise entry being edited in the active workout.
 class DraftExercise {
@@ -38,6 +101,7 @@ class DraftExercise {
   int sets;
   int reps;
   double weight;
+  bool isWarmup;
 
   DraftExercise({
     required this.exerciseId,
@@ -46,6 +110,7 @@ class DraftExercise {
     this.sets = 3,
     this.reps = 10,
     this.weight = 0,
+    this.isWarmup = false,
   });
 
   factory DraftExercise.fromExercise(ExerciseEntity exercise) {
@@ -152,11 +217,11 @@ class ActiveWorkoutNotifier extends Notifier<ActiveWorkout?> {
     state = null;
   }
 
-  /// Persist the active workout and clear the draft.
-  /// Returns the saved workout, or null if there was nothing to save.
-  Future<WorkoutEntity?> finish() async {
+  /// Persist the active workout, check for new PRs, and clear the draft.
+  /// Returns a record of the saved workout + any new PR exercise names.
+  Future<({WorkoutEntity? workout, List<String> newPRs})> finish() async {
     final current = state;
-    if (current == null) return null;
+    if (current == null) return (workout: null, newPRs: <String>[]);
 
     final now = DateTime.now();
     final durationMinutes =
@@ -183,8 +248,21 @@ class ActiveWorkoutNotifier extends Notifier<ActiveWorkout?> {
           durationMinutes: durationMinutes,
         );
 
+    // Check PRs using only working sets
+    final workingEntities = exerciseEntities
+        .where((e) => !current.exercises
+            .firstWhere((d) => d.exerciseId == e.exerciseId,
+                orElse: () => DraftExercise(
+                    exerciseId: '', name: '', muscleGroup: ''))
+            .isWarmup)
+        .toList();
+
+    final newPRs = await ref
+        .read(personalRecordsProvider.notifier)
+        .checkAndSaveNewPRs(workingEntities);
+
     state = null;
     await ref.read(workoutsProvider.notifier).refresh();
-    return saved;
+    return (workout: saved, newPRs: newPRs);
   }
 }
