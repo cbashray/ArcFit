@@ -47,16 +47,14 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Row(
           children: [
-            Container(
-              width: 32,
-              height: 32,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(9),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
               ),
-              child: const Icon(Icons.fitness_center_rounded,
-                  size: 18, color: AppTheme.primaryGreen),
             ),
             const SizedBox(width: 10),
             const Text(

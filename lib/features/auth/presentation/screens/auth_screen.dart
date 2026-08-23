@@ -88,37 +88,52 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     // Logo / title
-                    Container(
-                      width: 88,
-                      height: 88,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryGreen.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: const Icon(
-                        Icons.fitness_center_rounded,
-                        size: 48,
-                        color: AppTheme.primaryGreen,
+                    Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryGreen.withValues(alpha: 0.25),
+                              blurRadius: 24,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            width: 110,
+                            height: 110,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     const Text(
                       'FitX',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 32,
+                        fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryGreen,
+                        letterSpacing: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     const Text(
-                      'Your AI-powered gym companion',
+                      'STRONGER YOU, EVERY DAY.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 15, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.5,
+                        color: Colors.grey,
+                      ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 36),
 
                     // Mode toggle
                     SegmentedButton<bool>(

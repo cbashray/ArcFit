@@ -214,11 +214,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           Card(
             child: Column(
               children: [
-                const _SettingsTile(
-                  icon: Icons.info_outline_rounded,
-                  iconColor: Colors.grey,
-                  title: 'FitX',
-                  subtitle: 'Version 1.0.0 — AI-powered fitness tracker',
+                ListTile(
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 36,
+                      height: 36,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  title: const Text('FitX',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  subtitle: const Text('Version 1.0.0 — AI-powered fitness tracker',
+                      style: TextStyle(fontSize: 12)),
                 ),
                 const Divider(height: 1, indent: 56),
                 const _SettingsTile(
