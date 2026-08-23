@@ -1,8 +1,10 @@
 <div align="center">
 
-# 💪 FitX
+<img src="assets/images/logo.png" width="120" height="120" alt="FitX Logo" style="border-radius: 24px;" />
 
-### Your AI-Powered Gym & Fitness Companion
+# FitX
+
+### Stronger You, Every Day · Your AI-Powered Gym & Fitness Companion
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.24+-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.4+-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
