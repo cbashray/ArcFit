@@ -196,5 +196,3 @@ Each feature is cleanly divided into three layers:
 - [x] **AI Fitness Coach** (Conversational assistant with quick-prompts)
 - [x] **Progress & Body Metrics** (`fl_chart` weight/volume tracking)
 - [x] **Light & Dark Themes** (Tailored dark mode palette)
-
-
