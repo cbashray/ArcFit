@@ -10,6 +10,7 @@ import '../../features/auth/presentation/screens/auth_screen.dart';
 import '../../features/exercise_library/domain/entities/exercise_entity.dart';
 import '../../features/exercise_library/presentation/screens/exercise_browse_screen.dart';
 import '../../features/exercise_library/presentation/screens/exercise_detail_screen.dart';
+import '../../features/habits/presentation/screens/habit_tracker_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/nutrition/presentation/screens/food_search_screen.dart';
 import '../../features/nutrition/presentation/screens/nutrition_screen.dart';
@@ -41,6 +42,7 @@ class AppRoutes {
   static const String fitnessCoach = '/coach';
   static const String badges = '/badges';
   static const String challenges = '/challenges';
+  static const String habits = '/habits';
   static const String leaderboard = '/leaderboard';
   static const String workoutTemplates = '/templates';
   static const String summaryReport = '/summary-report';
@@ -215,6 +217,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.challenges,
         name: 'challenges',
         builder: (context, state) => const ChallengesScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.habits,
+        name: 'habits',
+        builder: (context, state) => const HabitTrackerScreen(),
       ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,

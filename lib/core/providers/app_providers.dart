@@ -11,6 +11,8 @@ import '../../features/exercise_library/domain/repos/exercise_repository.dart';
 import '../../features/workouts/data/repos/local_personal_record_repository.dart';
 import '../../features/workouts/data/repos/local_workout_repository.dart';
 import '../../core/services/notification_service.dart';
+import '../../features/habits/data/repos/local_habit_repository.dart';
+import '../../features/habits/domain/repos/habit_repository.dart';
 import '../../features/workouts/domain/repos/personal_record_repository.dart';
 import '../../features/workouts/domain/repos/workout_repository.dart';
 
@@ -48,4 +50,8 @@ final adaptiveWorkoutRepositoryProvider =
 final personalRecordRepositoryProvider =
     Provider<PersonalRecordRepository>((ref) {
   return LocalPersonalRecordRepository(ref.watch(sharedPreferencesProvider));
+});
+
+final habitRepositoryProvider = Provider<HabitRepository>((ref) {
+  return LocalHabitRepository(ref.watch(sharedPreferencesProvider));
 });
