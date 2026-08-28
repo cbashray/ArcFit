@@ -1,14 +1,11 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/file_saver/file_saver.dart';
 import '../../../home/presentation/screens/home_screen.dart';
 import '../../../workouts/presentation/providers/workout_providers.dart';
 import '../../domain/entities/summary_report_entity.dart';
@@ -121,16 +118,26 @@ class _SummaryReportScreenState extends ConsumerState<SummaryReportScreen> {
         ),
       );
 
-      final dir = await getTemporaryDirectory();
-      final file = File(
-          '${dir.path}/fitx_summary_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf');
-      await file.writeAsBytes(await doc.save());
+      final pdfBytes = await doc.save();
+      final fileName =
+          'fitx_summary_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf';
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'My FitX $title',
-        subject: 'FitX Performance Report',
+      await saveAndShareFile(
+        bytes: pdfBytes,
+        fileName: fileName,
+        mimeType: 'application/pdf',
+        shareText: 'My FitX $title',
+        shareSubject: 'FitX Performance Report',
       );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Report exported successfully! 📄'),
+            backgroundColor: AppTheme.primaryGreen,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
