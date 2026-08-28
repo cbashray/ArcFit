@@ -67,37 +67,42 @@ class _AdaptiveWorkoutScreenState extends ConsumerState<AdaptiveWorkoutScreen> {
   @override
   Widget build(BuildContext context) {
     final planAsync = ref.watch(generatedPlanProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: const Text('AI Workout Generator')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Intro
+          // Intro banner
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.deepPurple.withValues(alpha: 0.12),
-                  Colors.deepPurple.withValues(alpha: 0.04),
+                  Colors.deepPurple.withValues(alpha: isDark ? 0.25 : 0.12),
+                  Colors.deepPurple.withValues(alpha: isDark ? 0.1 : 0.04),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.deepPurple.withValues(alpha: isDark ? 0.3 : 0.15),
+              ),
             ),
             child: Row(
               children: [
                 const Icon(Icons.auto_awesome_rounded,
-                    color: Colors.deepPurple, size: 28),
+                    color: Colors.deepPurpleAccent, size: 28),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Tell FitX your goals and available equipment — '
-                    'it builds a plan for you.',
+                    'it builds an optimal workout plan for you.',
                     style: TextStyle(
                       fontSize: 13,
                       height: 1.4,
-                      color: Colors.deepPurple.shade900,
+                      color: isDark ? Colors.deepPurple.shade100 : Colors.deepPurple.shade900,
                     ),
                   ),
                 ),
@@ -323,21 +328,28 @@ class _ChoiceChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return FilterChip(
       label: Text(
         label,
         style: TextStyle(
           fontSize: 13,
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          color: isSelected ? Colors.black87 : Colors.grey.shade800,
+          color: isSelected
+              ? Colors.white
+              : (isDark ? Colors.grey.shade300 : Colors.grey.shade800),
         ),
       ),
       selected: isSelected,
       showCheckmark: false,
       selectedColor: AppTheme.primaryGreen,
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       side: BorderSide(
-        color: isSelected ? AppTheme.primaryGreen : Colors.grey.shade300,
+        color: isSelected
+            ? AppTheme.primaryGreen
+            : (isDark ? const Color(0xFF333333) : Colors.grey.shade300),
       ),
       onSelected: (_) => onSelected(),
     );
@@ -357,13 +369,16 @@ class _GeneratedPlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color ?? (isDark ? const Color(0xFF1E1E1E) : Colors.white),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.4)),
+        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.5), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,7 +390,7 @@ class _GeneratedPlanCard extends StatelessWidget {
                 height: 40,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                  color: AppTheme.primaryGreen.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.auto_awesome_rounded,
@@ -388,16 +403,20 @@ class _GeneratedPlanCard extends StatelessWidget {
                   children: [
                     Text(
                       plan.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       '${plan.exercises.length} exercises • '
                       '~${plan.estimatedDuration} min',
                       style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade600),
+                        fontSize: 12,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      ),
                     ),
                   ],
                 ),
@@ -409,33 +428,38 @@ class _GeneratedPlanCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             plan.description,
             style: TextStyle(
               fontSize: 12,
               height: 1.4,
-              color: Colors.grey.shade700,
+              color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
             ),
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1),
-          const SizedBox(height: 8),
+          Divider(
+            height: 1,
+            color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200,
+          ),
+          const SizedBox(height: 10),
           for (final exercise in plan.exercises)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(
                 children: [
                   Container(
-                    width: 30,
-                    height: 30,
+                    width: 32,
+                    height: 32,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF7F8FA),
+                      color: isDark
+                          ? const Color(0xFF282828)
+                          : const Color(0xFFF0F4F2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.fitness_center,
-                        size: 15, color: AppTheme.primaryGreen),
+                        size: 16, color: AppTheme.primaryGreen),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -444,17 +468,19 @@ class _GeneratedPlanCard extends StatelessWidget {
                       children: [
                         Text(
                           exercise.exerciseName,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : Colors.black87,
                           ),
                         ),
+                        const SizedBox(height: 1),
                         Text(
                           '${exercise.sets} sets × ${exercise.reps} reps'
                           '${exercise.restTime != null ? ' • ${exercise.restTime}s rest' : ''}',
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey.shade600,
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                           ),
                         ),
                       ],
@@ -466,13 +492,13 @@ class _GeneratedPlanCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade700,
+                        color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
                       ),
                     ),
                 ],
               ),
             ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           SizedBox(
             width: double.infinity,
             height: 46,
@@ -496,18 +522,23 @@ class _PlanHistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardTheme.color ?? (isDark ? const Color(0xFF1E1E1E) : Colors.white),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200,
+        ),
       ),
       child: Row(
         children: [
           const Icon(Icons.description_outlined,
-              size: 20, color: Colors.deepPurple),
+              size: 20, color: Colors.deepPurpleAccent),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -515,13 +546,19 @@ class _PlanHistoryTile extends StatelessWidget {
               children: [
                 Text(
                   plan.title,
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
                 ),
                 Text(
                   '${DateFormat('MMM d').format(plan.generatedAt)} • '
                   '${plan.exercises.length} exercises • ${plan.goals ?? ''}',
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                  ),
                 ),
               ],
             ),

@@ -11,6 +11,8 @@ class ExerciseDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final color = muscleGroupColor(exercise.muscleGroup);
 
     return Scaffold(
@@ -27,13 +29,16 @@ class ExerciseDetailScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    color.withValues(alpha: 0.15),
-                    color.withValues(alpha: 0.05),
+                    color.withValues(alpha: 0.2),
+                    color.withValues(alpha: 0.06),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: color.withValues(alpha: isDark ? 0.3 : 0.15),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,11 +49,14 @@ class ExerciseDetailScreen extends StatelessWidget {
                         width: 52,
                         height: 52,
                         decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.2),
+                          color: color.withValues(alpha: 0.25),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: Icon(muscleGroupIcon(exercise.muscleGroup),
-                            color: color, size: 26),
+                        child: Icon(
+                          muscleGroupIcon(exercise.muscleGroup),
+                          color: color,
+                          size: 26,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -57,14 +65,16 @@ class ExerciseDetailScreen extends StatelessWidget {
                           children: [
                             Text(
                               exercise.name,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
+                                color: isDark ? Colors.white : Colors.black87,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 6),
                             Wrap(
                               spacing: 6,
+                              runSpacing: 4,
                               children: [
                                 _Badge(
                                   label: exercise.muscleGroup,
@@ -72,7 +82,9 @@ class ExerciseDetailScreen extends StatelessWidget {
                                 ),
                                 _Badge(
                                   label: exercise.equipment,
-                                  color: Colors.grey,
+                                  color: isDark
+                                      ? Colors.grey.shade400
+                                      : Colors.grey.shade700,
                                 ),
                                 _Badge(
                                   label: exercise.difficultyLevel,
@@ -132,7 +144,7 @@ class ExerciseDetailScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 height: 1.5,
-                color: Colors.grey.shade800,
+                color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
               ),
             ),
             const SizedBox(height: 24),
@@ -148,10 +160,19 @@ class ExerciseDetailScreen extends StatelessWidget {
                     .map((muscle) => Chip(
                           label: Text(
                             muscle,
-                            style: const TextStyle(fontSize: 12),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
                           ),
-                          backgroundColor: Colors.grey.shade100,
-                          side: BorderSide(color: Colors.grey.shade300),
+                          backgroundColor: isDark
+                              ? const Color(0xFF222222)
+                              : Colors.grey.shade100,
+                          side: BorderSide(
+                            color: isDark
+                                ? const Color(0xFF333333)
+                                : Colors.grey.shade300,
+                          ),
                         ))
                     .toList(),
               ),
@@ -163,11 +184,12 @@ class ExerciseDetailScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                color: isDark
+                    ? AppTheme.primaryGreen.withValues(alpha: 0.12)
+                    : AppTheme.primaryGreen.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border(
-                  left:
-                      const BorderSide(color: AppTheme.primaryGreen, width: 4),
+                border: const Border(
+                  left: BorderSide(color: AppTheme.primaryGreen, width: 4),
                 ),
               ),
               child: Row(
@@ -188,16 +210,18 @@ class ExerciseDetailScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryDark,
+                            color: AppTheme.primaryGreen,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           exercise.formCue,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             height: 1.4,
-                            color: AppTheme.primaryDark,
+                            color: isDark
+                                ? Colors.grey.shade200
+                                : AppTheme.primaryDark,
                           ),
                         ),
                       ],
@@ -220,7 +244,18 @@ class ExerciseDetailScreen extends StatelessWidget {
                     .map((alt) => Chip(
                           label: Text(
                             alt.replaceAll('ex_', '').replaceAll('_', ' '),
-                            style: const TextStyle(fontSize: 12),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          backgroundColor: isDark
+                              ? const Color(0xFF222222)
+                              : Colors.grey.shade100,
+                          side: BorderSide(
+                            color: isDark
+                                ? const Color(0xFF333333)
+                                : Colors.grey.shade300,
                           ),
                         ))
                     .toList(),
@@ -291,12 +326,19 @@ class _ParamTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark
+            ? const Color(0xFF1E1E1E)
+            : (theme.cardTheme.color ?? Colors.white),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200,
+        ),
       ),
       child: Column(
         children: [
@@ -304,15 +346,19 @@ class _ParamTile extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Colors.black87,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            style: TextStyle(
+              fontSize: 11,
+              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+            ),
           ),
         ],
       ),

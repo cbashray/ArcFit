@@ -74,9 +74,11 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
+  bool _isFinishing = false;
+
   Future<void> _finishWorkout() async {
     final active = ref.read(activeWorkoutProvider);
-    if (active == null) return;
+    if (active == null || _isFinishing) return;
 
     if (active.exercises.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -88,21 +90,36 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       return;
     }
 
-    final result = await ref.read(activeWorkoutProvider.notifier).finish();
-    if (!mounted) return;
+    setState(() => _isFinishing = true);
 
-    if (result.workout != null) {
-      // Show AI Workout Review modal
-      showAiWorkoutReviewModal(
-        context,
-        result.workout!,
-        newPRs: result.newPRs,
-        onDismissed: () {
-          if (mounted) context.goNamed('home');
-        },
-      );
-    } else {
-      context.goNamed('home');
+    try {
+      final result = await ref.read(activeWorkoutProvider.notifier).finish();
+      if (!mounted) return;
+
+      if (result.workout != null) {
+        // Show AI Workout Review modal
+        showAiWorkoutReviewModal(
+          context,
+          result.workout!,
+          newPRs: result.newPRs,
+          onDismissed: () {
+            if (mounted) context.goNamed('home');
+          },
+        );
+      } else {
+        context.goNamed('home');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving workout: $e'),
+            backgroundColor: AppTheme.errorRed,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isFinishing = false);
     }
   }
 
@@ -320,9 +337,20 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
                         Expanded(
                           flex: 2,
                           child: ElevatedButton.icon(
-                            onPressed: _finishWorkout,
-                            icon: const Icon(Icons.check_rounded),
-                            label: const Text('Finish Workout'),
+                            onPressed: _isFinishing ? null : _finishWorkout,
+                            icon: _isFinishing
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.check_rounded),
+                            label: Text(_isFinishing
+                                ? 'Saving...'
+                                : 'Finish Workout'),
                           ),
                         ),
                       ],
