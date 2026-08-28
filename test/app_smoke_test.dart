@@ -1,4 +1,6 @@
 import 'package:fitx/core/providers/app_providers.dart';
+import 'package:fitx/features/auth/data/repos/local_auth_repository.dart';
+import 'package:fitx/features/workouts/data/repos/local_workout_repository.dart';
 import 'package:fitx/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +18,11 @@ Future<void> pumpApp(WidgetTester tester) async {
 
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        authRepositoryProvider.overrideWithValue(LocalAuthRepository(prefs)),
+        workoutRepositoryProvider.overrideWithValue(LocalWorkoutRepository(prefs)),
+      ],
       child: const FitXApp(),
     ),
   );

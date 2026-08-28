@@ -1,12 +1,12 @@
-import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/file_saver/file_saver.dart';
 import '../../../workouts/presentation/providers/workout_providers.dart';
 
 class ExportScreen extends ConsumerStatefulWidget {
@@ -42,16 +42,19 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
         }
       }
 
-      final dir = await getTemporaryDirectory();
-      final file = File(
-          '${dir.path}/fitx_workouts_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv');
-      await file.writeAsString(buf.toString());
+      final fileName =
+          'fitx_workouts_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
+      final csvBytes = Uint8List.fromList(utf8.encode(buf.toString()));
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'My FitX workout history',
-        subject: 'FitX Workout History',
+      await saveAndShareFile(
+        bytes: csvBytes,
+        fileName: fileName,
+        mimeType: 'text/csv',
+        shareText: 'My FitX workout history',
+        shareSubject: 'FitX Workout History',
       );
+
+      _showSnack('Workouts exported successfully as CSV! 📊');
     } catch (e) {
       _showSnack('Export failed: $e', isError: true);
     } finally {

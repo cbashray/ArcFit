@@ -183,7 +183,6 @@ Each feature is cleanly divided into three layers:
 ## 🗺 Roadmap
 
 ### ✅ Completed
-- [x] **5-Tab Navigation Bar** (Home, Leaderboard, Workout, Nutrition, AI Coach)
 - [x] **Workout Logging & PR Tracker** (Estimated 1RM, rest timer, volume calculation)
 - [x] **Workout Templates** (Push, Pull, Legs, Upper, Full Body & custom creator)
 - [x] **Exercise Substitution AI** (Biomechanical alternative recommendations)

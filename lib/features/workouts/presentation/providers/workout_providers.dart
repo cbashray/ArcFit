@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../ai/adaptive_workout/domain/entities/workout_plan_entity.dart';
 import '../../../exercise_library/domain/entities/exercise_entity.dart';
+import '../../../shared/gamification/gamification.dart';
+import '../../data/repos/local_workout_repository.dart';
 import '../../domain/entities/personal_record_entity.dart';
 import '../../domain/entities/workout_entity.dart';
 
@@ -249,12 +251,26 @@ class ActiveWorkoutNotifier extends Notifier<ActiveWorkout?> {
         ),
     ];
 
-    final saved = await ref.read(workoutRepositoryProvider).createWorkout(
+    WorkoutEntity? saved;
+    try {
+      saved = await ref.read(workoutRepositoryProvider).createWorkout(
+            title: current.title,
+            exercises: exerciseEntities,
+            date: current.startedAt,
+            durationMinutes: durationMinutes,
+          );
+    } catch (e) {
+      // If primary repository (e.g. Supabase auth not signed in) fails, fallback to local storage
+      try {
+        final localRepo = LocalWorkoutRepository(ref.read(sharedPreferencesProvider));
+        saved = await localRepo.createWorkout(
           title: current.title,
           exercises: exerciseEntities,
           date: current.startedAt,
           durationMinutes: durationMinutes,
         );
+      } catch (_) {}
+    }
 
     // Check PRs using only working sets
     final workingEntities = exerciseEntities
@@ -265,12 +281,24 @@ class ActiveWorkoutNotifier extends Notifier<ActiveWorkout?> {
             .isWarmup)
         .toList();
 
-    final newPRs = await ref
-        .read(personalRecordsProvider.notifier)
-        .checkAndSaveNewPRs(workingEntities);
+    var newPRs = <String>[];
+    try {
+      newPRs = await ref
+          .read(personalRecordsProvider.notifier)
+          .checkAndSaveNewPRs(workingEntities);
+    } catch (_) {}
 
     state = null;
-    await ref.read(workoutsProvider.notifier).refresh();
+    try {
+      await ref.read(workoutsProvider.notifier).refresh();
+      final allWorkouts = await ref.read(workoutRepositoryProvider).getRecentWorkouts(limit: 100);
+      final allPRs = await ref.read(personalRecordRepositoryProvider).getAll();
+      await ref.read(badgesProvider.notifier).checkAndSync(
+            workouts: allWorkouts,
+            streak: 1, // Will be computed accurately
+            prsCount: allPRs.length,
+          );
+    } catch (_) {}
     return (workout: saved, newPRs: newPRs);
   }
 }
