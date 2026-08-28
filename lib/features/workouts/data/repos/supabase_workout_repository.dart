@@ -3,87 +3,114 @@ import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/workout_entity.dart';
 import '../../domain/repos/workout_repository.dart';
+import 'local_workout_repository.dart';
 
-/// Supabase implementation of [WorkoutRepository]
+/// Supabase implementation of [WorkoutRepository] with local fallback.
 class SupabaseWorkoutRepository implements WorkoutRepository {
   final sb.SupabaseClient _client;
+  final LocalWorkoutRepository? _fallback;
   static const _uuid = Uuid();
 
-  SupabaseWorkoutRepository(this._client);
+  SupabaseWorkoutRepository(this._client, {LocalWorkoutRepository? fallback})
+      : _fallback = fallback;
 
   String? get _userId => _client.auth.currentUser?.id;
 
   @override
   Future<List<WorkoutEntity>> getRecentWorkouts({int limit = 10}) async {
     final uid = _userId;
-    if (uid == null) return [];
+    if (uid == null) {
+      return await _fallback?.getRecentWorkouts(limit: limit) ?? [];
+    }
 
-    final response = await _client
-        .from('workouts')
-        .select('''
-          id,
-          user_id,
-          title,
-          duration_minutes,
-          notes,
-          started_at,
-          completed_at,
-          created_at,
-          workout_exercises (
+    try {
+      final response = await _client
+          .from('workouts')
+          .select('''
             id,
-            exercise_id,
-            exercise_name,
-            order,
-            workout_sets (
+            user_id,
+            title,
+            duration_minutes,
+            notes,
+            started_at,
+            completed_at,
+            created_at,
+            workout_exercises (
               id,
-              set_number,
-              weight_kg,
-              reps,
-              rpe,
-              is_completed
+              exercise_id,
+              exercise_name,
+              order,
+              workout_sets (
+                id,
+                set_number,
+                weight_kg,
+                reps,
+                rpe,
+                is_completed
+              )
             )
-          )
-        ''')
-        .eq('user_id', uid)
-        .order('started_at', ascending: false)
-        .limit(limit);
+          ''')
+          .eq('user_id', uid)
+          .order('started_at', ascending: false)
+          .limit(limit);
 
-    return (response as List<dynamic>).map((row) => _mapToEntity(row as Map<String, dynamic>)).toList();
+      final list = (response as List<dynamic>)
+          .map((row) => _mapToEntity(row as Map<String, dynamic>))
+          .toList();
+
+      if (list.isEmpty && _fallback != null) {
+        return await _fallback.getRecentWorkouts(limit: limit);
+      }
+      return list;
+    } catch (_) {
+      return await _fallback?.getRecentWorkouts(limit: limit) ?? [];
+    }
   }
 
   @override
   Future<WorkoutEntity?> getWorkoutById(String workoutId) async {
-    final response = await _client
-        .from('workouts')
-        .select('''
-          id,
-          user_id,
-          title,
-          duration_minutes,
-          notes,
-          started_at,
-          completed_at,
-          created_at,
-          workout_exercises (
-            id,
-            exercise_id,
-            exercise_name,
-            order,
-            workout_sets (
-              id,
-              set_number,
-              weight_kg,
-              reps,
-              rpe,
-              is_completed
-            )
-          )
-        ''')
-        .eq('id', workoutId)
-        .maybeSingle();
+    final uid = _userId;
+    if (uid == null) {
+      return await _fallback?.getWorkoutById(workoutId);
+    }
 
-    if (response == null) return null;
-    return _mapToEntity(response);
+    try {
+      final response = await _client
+          .from('workouts')
+          .select('''
+            id,
+            user_id,
+            title,
+            duration_minutes,
+            notes,
+            started_at,
+            completed_at,
+            created_at,
+            workout_exercises (
+              id,
+              exercise_id,
+              exercise_name,
+              order,
+              workout_sets (
+                id,
+                set_number,
+                weight_kg,
+                reps,
+                rpe,
+                is_completed
+              )
+            )
+          ''')
+          .eq('id', workoutId)
+          .maybeSingle();
+
+      if (response == null) {
+        return await _fallback?.getWorkoutById(workoutId);
+      }
+      return _mapToEntity(response);
+    } catch (_) {
+      return await _fallback?.getWorkoutById(workoutId);
+    }
   }
 
   @override
@@ -94,77 +121,105 @@ class SupabaseWorkoutRepository implements WorkoutRepository {
     double durationMinutes = 0,
     String? notes,
   }) async {
-    final uid = _userId;
-    if (uid == null) throw Exception('User not authenticated');
-
-    final workoutDate = date ?? DateTime.now();
-    final workoutId = _uuid.v4();
-
-    // 1. Insert Workout
-    await _client.from('workouts').insert({
-      'id': workoutId,
-      'user_id': uid,
-      'title': title,
-      'duration_minutes': durationMinutes.toInt(),
-      'notes': notes,
-      'started_at': workoutDate.toIso8601String(),
-      'completed_at': DateTime.now().toIso8601String(),
-    });
-
-    // 2. Insert exercises & sets
-    for (int i = 0; i < exercises.length; i++) {
-      final ex = exercises[i];
-      final workoutExerciseId = _uuid.v4();
-
-      await _client.from('workout_exercises').insert({
-        'id': workoutExerciseId,
-        'workout_id': workoutId,
-        'exercise_id': ex.exerciseId,
-        'exercise_name': ex.exerciseName,
-        'order': i,
-      });
-
-      final setsToInsert = List.generate(ex.sets, (index) => {
-        'id': _uuid.v4(),
-        'workout_exercise_id': workoutExerciseId,
-        'set_number': index + 1,
-        'weight_kg': ex.weight ?? 0.0,
-        'reps': ex.reps,
-        'rpe': ex.rpe,
-        'is_completed': true,
-      });
-
-      if (setsToInsert.isNotEmpty) {
-        await _client.from('workout_sets').insert(setsToInsert);
-      }
+    WorkoutEntity? localEntity;
+    if (_fallback != null) {
+      localEntity = await _fallback.createWorkout(
+        title: title,
+        exercises: exercises,
+        date: date,
+        durationMinutes: durationMinutes,
+        notes: notes,
+      );
     }
 
-    final entity = await getWorkoutById(workoutId);
-    return entity!;
+    final uid = _userId;
+    if (uid == null) {
+      if (localEntity != null) return localEntity;
+      throw Exception('User not authenticated');
+    }
+
+    try {
+      final workoutDate = date ?? DateTime.now();
+      final workoutId = _uuid.v4();
+
+      // 1. Insert Workout
+      await _client.from('workouts').insert({
+        'id': workoutId,
+        'user_id': uid,
+        'title': title,
+        'duration_minutes': durationMinutes.toInt(),
+        'notes': notes,
+        'started_at': workoutDate.toIso8601String(),
+        'completed_at': DateTime.now().toIso8601String(),
+      });
+
+      // 2. Insert exercises & sets
+      for (int i = 0; i < exercises.length; i++) {
+        final ex = exercises[i];
+        final workoutExerciseId = _uuid.v4();
+
+        await _client.from('workout_exercises').insert({
+          'id': workoutExerciseId,
+          'workout_id': workoutId,
+          'exercise_id': ex.exerciseId,
+          'exercise_name': ex.exerciseName,
+          'order': i,
+        });
+
+        final setsToInsert = List.generate(ex.sets, (index) => {
+          'id': _uuid.v4(),
+          'workout_exercise_id': workoutExerciseId,
+          'set_number': index + 1,
+          'weight_kg': ex.weight ?? 0.0,
+          'reps': ex.reps,
+          'rpe': ex.rpe,
+          'is_completed': true,
+        });
+
+        if (setsToInsert.isNotEmpty) {
+          await _client.from('workout_sets').insert(setsToInsert);
+        }
+      }
+
+      final entity = await getWorkoutById(workoutId);
+      return entity ?? localEntity!;
+    } catch (_) {
+      if (localEntity != null) return localEntity;
+      rethrow;
+    }
   }
 
   @override
   Future<void> deleteWorkout({required String workoutId}) async {
-    await _client.from('workouts').delete().eq('id', workoutId);
+    await _fallback?.deleteWorkout(workoutId: workoutId);
+    final uid = _userId;
+    if (uid != null) {
+      try {
+        await _client.from('workouts').delete().eq('id', workoutId);
+      } catch (_) {}
+    }
   }
 
   @override
   Future<int> getWorkoutCount() async {
     final uid = _userId;
-    if (uid == null) return 0;
+    if (uid == null) {
+      return await _fallback?.getWorkoutCount() ?? 0;
+    }
 
-    final response = await _client
-        .from('workouts')
-        .select('id')
-        .eq('user_id', uid);
-    return (response as List<dynamic>).length;
+    try {
+      final response = await _client
+          .from('workouts')
+          .select('id')
+          .eq('user_id', uid);
+      return (response as List<dynamic>).length;
+    } catch (_) {
+      return await _fallback?.getWorkoutCount() ?? 0;
+    }
   }
 
   @override
   Future<int> getTotalExercisesLogged() async {
-    final uid = _userId;
-    if (uid == null) return 0;
-
     final workouts = await getRecentWorkouts(limit: 100);
     return workouts.fold<int>(0, (sum, w) => sum + w.exercises.length);
   }
@@ -175,40 +230,53 @@ class SupabaseWorkoutRepository implements WorkoutRepository {
     required DateTime endDate,
   }) async {
     final uid = _userId;
-    if (uid == null) return [];
+    if (uid == null) {
+      return await _fallback?.getWorkoutsByDateRange(startDate: startDate, endDate: endDate) ?? [];
+    }
 
-    final response = await _client
-        .from('workouts')
-        .select('''
-          id,
-          user_id,
-          title,
-          duration_minutes,
-          notes,
-          started_at,
-          completed_at,
-          created_at,
-          workout_exercises (
+    try {
+      final response = await _client
+          .from('workouts')
+          .select('''
             id,
-            exercise_id,
-            exercise_name,
-            order,
-            workout_sets (
+            user_id,
+            title,
+            duration_minutes,
+            notes,
+            started_at,
+            completed_at,
+            created_at,
+            workout_exercises (
               id,
-              set_number,
-              weight_kg,
-              reps,
-              rpe,
-              is_completed
+              exercise_id,
+              exercise_name,
+              order,
+              workout_sets (
+                id,
+                set_number,
+                weight_kg,
+                reps,
+                rpe,
+                is_completed
+              )
             )
-          )
-        ''')
-        .eq('user_id', uid)
-        .gte('started_at', startDate.toIso8601String())
-        .lte('started_at', endDate.toIso8601String())
-        .order('started_at', ascending: false);
+          ''')
+          .eq('user_id', uid)
+          .gte('started_at', startDate.toIso8601String())
+          .lte('started_at', endDate.toIso8601String())
+          .order('started_at', ascending: false);
 
-    return (response as List<dynamic>).map((row) => _mapToEntity(row as Map<String, dynamic>)).toList();
+      final list = (response as List<dynamic>)
+          .map((row) => _mapToEntity(row as Map<String, dynamic>))
+          .toList();
+
+      if (list.isEmpty && _fallback != null) {
+        return await _fallback.getWorkoutsByDateRange(startDate: startDate, endDate: endDate);
+      }
+      return list;
+    } catch (_) {
+      return await _fallback?.getWorkoutsByDateRange(startDate: startDate, endDate: endDate) ?? [];
+    }
   }
 
   WorkoutEntity _mapToEntity(Map<String, dynamic> row) {
