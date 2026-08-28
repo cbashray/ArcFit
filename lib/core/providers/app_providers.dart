@@ -31,12 +31,24 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService(ref.watch(sharedPreferencesProvider));
 });
 
-/// Repositories (Switches between Supabase & Local based on configuration)
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  if (SupabaseConfig.isConfigured) {
-    return SupabaseAuthRepository(Supabase.instance.client);
+SupabaseClient? _getSafeSupabaseClient() {
+  if (!SupabaseConfig.isConfigured) return null;
+  try {
+    return Supabase.instance.client;
+  } catch (_) {
+    return null;
   }
-  return LocalAuthRepository(ref.watch(sharedPreferencesProvider));
+}
+
+/// Repositories (Switches between Supabase & Local with fallback)
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  final local = LocalAuthRepository(prefs);
+  final client = _getSafeSupabaseClient();
+  if (client != null) {
+    return SupabaseAuthRepository(client, fallback: local);
+  }
+  return local;
 });
 
 final exerciseRepositoryProvider = Provider<ExerciseRepository>((ref) {
@@ -44,26 +56,31 @@ final exerciseRepositoryProvider = Provider<ExerciseRepository>((ref) {
 });
 
 final workoutRepositoryProvider = Provider<WorkoutRepository>((ref) {
-  if (SupabaseConfig.isConfigured) {
-    return SupabaseWorkoutRepository(Supabase.instance.client);
+  final prefs = ref.watch(sharedPreferencesProvider);
+  final local = LocalWorkoutRepository(prefs);
+  final client = _getSafeSupabaseClient();
+  if (client != null) {
+    return SupabaseWorkoutRepository(client, fallback: local);
   }
-  return LocalWorkoutRepository(ref.watch(sharedPreferencesProvider));
+  return local;
 });
 
 final adaptiveWorkoutRepositoryProvider =
     Provider<AdaptiveWorkoutRepository>((ref) {
-  return LocalAdaptiveWorkoutRepository(
-    ref.watch(sharedPreferencesProvider),
-    ref.watch(exerciseRepositoryProvider),
-  );
+  final prefs = ref.watch(sharedPreferencesProvider);
+  final exerciseRepo = ref.watch(exerciseRepositoryProvider);
+  return LocalAdaptiveWorkoutRepository(prefs, exerciseRepo);
 });
 
 final personalRecordRepositoryProvider =
     Provider<PersonalRecordRepository>((ref) {
-  if (SupabaseConfig.isConfigured) {
-    return SupabasePersonalRecordRepository(Supabase.instance.client);
+  final prefs = ref.watch(sharedPreferencesProvider);
+  final local = LocalPersonalRecordRepository(prefs);
+  final client = _getSafeSupabaseClient();
+  if (client != null) {
+    return SupabasePersonalRecordRepository(client, fallback: local);
   }
-  return LocalPersonalRecordRepository(ref.watch(sharedPreferencesProvider));
+  return local;
 });
 
 final habitRepositoryProvider = Provider<HabitRepository>((ref) {

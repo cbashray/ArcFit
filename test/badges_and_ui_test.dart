@@ -1,5 +1,8 @@
+import 'package:fitx/core/providers/app_providers.dart';
 import 'package:fitx/features/shared/gamification/gamification.dart';
 import 'package:fitx/features/workouts/domain/entities/workout_entity.dart';
+import 'package:fitx/features/workouts/presentation/providers/workout_providers.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -68,6 +71,38 @@ void main() {
       final firstWorkoutBadge = allBadges.firstWhere((b) => b.id == 'first_workout');
       expect(firstWorkoutBadge.isUnlocked, isTrue);
       expect(firstWorkoutBadge.unlockedAt, isNotNull);
+    });
+
+    test('Active workout finish logs workout and reflects in workoutsProvider', () async {
+      final element = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+      );
+
+      // Start active workout
+      final activeNotifier = element.read(activeWorkoutProvider.notifier);
+      activeNotifier.start(title: 'Leg Day Blast');
+      activeNotifier.addDraftExercise(DraftExercise(
+        exerciseId: 'ex_squat',
+        name: 'Barbell Squat',
+        muscleGroup: 'Legs',
+        sets: 4,
+        reps: 8,
+        weight: 100,
+      ));
+
+      // Finish workout
+      final result = await activeNotifier.finish();
+      expect(result.workout, isNotNull);
+      expect(result.workout!.title, equals('Leg Day Blast'));
+
+      // Check workoutsProvider
+      final recentWorkouts = await element.read(workoutsProvider.future);
+      expect(recentWorkouts.length, equals(1));
+      expect(recentWorkouts.first.title, equals('Leg Day Blast'));
+      expect(recentWorkouts.first.exercises.length, equals(1));
+      expect(recentWorkouts.first.exercises.first.exerciseName, equals('Barbell Squat'));
     });
   });
 }
