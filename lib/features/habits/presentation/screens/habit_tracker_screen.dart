@@ -11,9 +11,6 @@ class HabitTrackerScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     final selectedDate = ref.watch(selectedHabitDateProvider);
     final habitsAsync = ref.watch(habitsProvider);
     final completionsAsync = ref.watch(dailyCompletionsProvider);
@@ -602,12 +599,7 @@ class _HabitCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final habitColor = Color(habit.colorValue);
-
-    final iconData = IconData(
-      habit.iconCodePoint,
-      fontFamily: habit.iconFontFamily,
-      fontPackage: habit.iconFontPackage,
-    );
+    final iconData = habitIconFromCodePoint(habit.iconCodePoint);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -881,6 +873,32 @@ class _EmptyHabitsCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Habit Icons Constant Mapping
+// ─────────────────────────────────────────────────────────────────────────────
+
+const List<IconData> _kAvailableHabitIcons = [
+  Icons.water_drop_rounded,
+  Icons.self_improvement_rounded,
+  Icons.bedtime_rounded,
+  Icons.restaurant_rounded,
+  Icons.fitness_center_rounded,
+  Icons.directions_run_rounded,
+  Icons.directions_walk_rounded,
+  Icons.menu_book_rounded,
+  Icons.favorite_rounded,
+  Icons.bolt_rounded,
+  Icons.psychology_rounded,
+  Icons.timer_rounded,
+];
+
+IconData habitIconFromCodePoint(int codePoint) {
+  for (final icon in _kAvailableHabitIcons) {
+    if (icon.codePoint == codePoint) return icon;
+  }
+  return Icons.check_circle_rounded;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Add / Edit Habit Bottom Sheet Modal
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -901,20 +919,7 @@ class _AddEditHabitSheetState extends ConsumerState<_AddEditHabitSheet> {
   late IconData _selectedIcon;
   late Color _selectedColor;
 
-  static const List<IconData> _availableIcons = [
-    Icons.water_drop_rounded,
-    Icons.self_improvement_rounded,
-    Icons.bedtime_rounded,
-    Icons.restaurant_rounded,
-    Icons.fitness_center_rounded,
-    Icons.directions_run_rounded,
-    Icons.directions_walk_rounded,
-    Icons.menu_book_rounded,
-    Icons.favorite_rounded,
-    Icons.bolt_rounded,
-    Icons.psychology_rounded,
-    Icons.timer_rounded,
-  ];
+  static const List<IconData> _availableIcons = _kAvailableHabitIcons;
 
   static const List<Color> _availableColors = [
     AppTheme.primaryGreen,
@@ -935,11 +940,7 @@ class _AddEditHabitSheetState extends ConsumerState<_AddEditHabitSheet> {
         TextEditingController(text: widget.habit?.description ?? '');
 
     if (widget.habit != null) {
-      _selectedIcon = IconData(
-        widget.habit!.iconCodePoint,
-        fontFamily: widget.habit!.iconFontFamily,
-        fontPackage: widget.habit!.iconFontPackage,
-      );
+      _selectedIcon = habitIconFromCodePoint(widget.habit!.iconCodePoint);
       _selectedColor = Color(widget.habit!.colorValue);
     } else {
       _selectedIcon = _availableIcons.first;
