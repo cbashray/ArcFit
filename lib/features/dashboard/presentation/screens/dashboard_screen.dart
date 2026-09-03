@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../home/presentation/screens/home_screen.dart'; // streakProvider
-import '../../../nutrition/presentation/providers/nutrition_providers.dart';
 import '../providers/dashboard_providers.dart';
 
 /// Dashboard Screen – aggregated fitness overview.
@@ -50,11 +49,6 @@ class DashboardScreen extends ConsumerWidget {
         toolbarHeight: 64,
         actions: [
           IconButton(
-            icon: const Icon(Icons.emoji_events_outlined),
-            tooltip: 'Badges',
-            onPressed: () => context.pushNamed('badges'),
-          ),
-          IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Settings',
             onPressed: () => context.pushNamed('settings'),
@@ -66,7 +60,6 @@ class DashboardScreen extends ConsumerWidget {
           ref.invalidate(todayWorkoutSummaryProvider);
           ref.invalidate(todayProgressProvider);
           ref.invalidate(weeklyActivityProvider);
-          ref.invalidate(dailyNutritionProvider);
         },
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -89,7 +82,7 @@ class DashboardScreen extends ConsumerWidget {
             _QuickActionsRow(
               onStartWorkout: () => context.goNamed('workoutLogging'),
               onBodyStats: () => context.pushNamed('bodyMetrics'),
-              onLogFood: () => context.pushNamed('addFood'),
+              onHabits: () => context.pushNamed('habits'),
             ),
             const SizedBox(height: 24),
 
@@ -134,20 +127,17 @@ class _TodayProgressCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final progressAsync = ref.watch(todayProgressProvider);
     final workoutAsync = ref.watch(todayWorkoutSummaryProvider);
-    final nutritionAsync = ref.watch(dailyNutritionProvider);
     final streakAsync = ref.watch(streakProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     final progress = progressAsync.valueOrNull ?? 0.0;
     final workout = workoutAsync.valueOrNull;
-    final nutrition = nutritionAsync.valueOrNull;
     final streak = streakAsync.valueOrNull ?? 0;
 
     final workoutCount = workout?.workoutCount ?? 0;
     final workoutMinutes = workout?.totalDurationMinutes ?? 0.0;
     final workoutCalories = workout?.totalCaloriesBurned ?? 0.0;
-    final foodCalories = nutrition?.totalCalories ?? 0.0;
 
     // Format workout display
     final String workoutValue;
@@ -164,10 +154,9 @@ class _TodayProgressCard extends ConsumerWidget {
       workoutValue = '—';
     }
 
-    // Format calories display (prefer workout active burn, fallback to food intake)
-    final totalCalories = workoutCalories > 0 ? workoutCalories : foodCalories;
+    // Format calories display
     final String caloriesValue =
-        totalCalories > 0 ? '${totalCalories.round()} kcal' : '—';
+        workoutCalories > 0 ? '${workoutCalories.round()} kcal' : '—';
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -247,7 +236,7 @@ class _TodayProgressCard extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 _MiniStat(
-                  icon: Icons.local_fire_department_rounded,
+                  icon: Icons.bolt_rounded,
                   color: AppTheme.errorRed,
                   label: 'Streak',
                   value: streak > 0 ? '$streak day${streak > 1 ? 's' : ''}' : '—',
@@ -459,12 +448,12 @@ class _WeeklyActivityChart extends ConsumerWidget {
 class _QuickActionsRow extends StatelessWidget {
   final VoidCallback onStartWorkout;
   final VoidCallback onBodyStats;
-  final VoidCallback onLogFood;
+  final VoidCallback onHabits;
 
   const _QuickActionsRow({
     required this.onStartWorkout,
     required this.onBodyStats,
-    required this.onLogFood,
+    required this.onHabits,
   });
 
   @override
@@ -491,10 +480,10 @@ class _QuickActionsRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _QuickActionButton(
-            icon: Icons.restaurant_outlined,
-            label: 'Log\nFood',
+            icon: Icons.checklist_rounded,
+            label: 'Daily\nHabits',
             color: AppTheme.accentOrange,
-            onTap: onLogFood,
+            onTap: onHabits,
           ),
         ),
       ],
@@ -628,7 +617,7 @@ class _ExploreCard extends StatelessWidget {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      'AI Workouts, Exercises, Habits, Reports & more',
+                      'AI Workouts, Exercises, Habits & Progress',
                       style: TextStyle(fontSize: 12, color: Colors.white70),
                     ),
                   ],

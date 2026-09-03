@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../gamification/domain/entities/leaderboard_entity.dart';
@@ -11,48 +12,64 @@ class LeaderboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final leaderboardAsync = ref.watch(leaderboardProvider);
-    final currentFilter = ref.watch(leaderboardFilterProvider);
     final currentCategory = ref.watch(leaderboardCategoryProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Community Leaderboard 🏆'),
       ),
-      body: Column(
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          // Timeframe Segmented Control
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: SegmentedButton<LeaderboardFilter>(
-              segments: const [
-                ButtonSegment(
-                  value: LeaderboardFilter.thisWeek,
-                  label: Text('This Week', style: TextStyle(fontSize: 12)),
+          // ── Achievements & Records Hub (Shifted from Dashboard) ──
+          const _GamificationHubRow(),
+          const SizedBox(height: 20),
+
+          // ── Weekly Competition Header ────────────────────────────
+          Row(
+            children: [
+              const Text(
+                'Weekly Standings',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
                 ),
-                ButtonSegment(
-                  value: LeaderboardFilter.thisMonth,
-                  label: Text('This Month', style: TextStyle(fontSize: 12)),
-                ),
-                ButtonSegment(
-                  value: LeaderboardFilter.allTime,
-                  label: Text('All Time', style: TextStyle(fontSize: 12)),
-                ),
-              ],
-              selected: {currentFilter},
-              onSelectionChanged: (set) => ref
-                  .read(leaderboardFilterProvider.notifier)
-                  .state = set.first,
-              style: const ButtonStyle(
-                visualDensity: VisualDensity.compact,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
-            ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.calendar_today_rounded,
+                      size: 12,
+                      color: AppTheme.primaryGreen,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'This Week',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primaryGreen,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 10),
 
           // Category Chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
                 _CategoryChip(
@@ -89,47 +106,188 @@ class LeaderboardScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          const Divider(height: 1),
+          const SizedBox(height: 14),
 
-          // Content
-          Expanded(
-            child: leaderboardAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator.adaptive()),
-              error: (err, _) => Center(child: Text('Error: $err')),
-              data: (users) {
-                if (users.isEmpty) {
-                  return const Center(child: Text('No entries found.'));
-                }
-
-                final top3 = users.take(3).toList();
-
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  children: [
-                    // Podium
-                    if (top3.length >= 3) _PodiumView(top3: top3),
-                    const SizedBox(height: 16),
-
-                    // Rest of Leaderboard
-                    const Text(
-                      'Rankings',
-                      style: TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    ...users.map((u) => _UserRankTile(user: u, category: currentCategory)),
-                  ],
-                );
-              },
+          // Leaderboard Podium & Rankings
+          leaderboardAsync.when(
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(child: CircularProgressIndicator.adaptive()),
             ),
+            error: (err, _) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Center(child: Text('Error: $err')),
+            ),
+            data: (users) {
+              if (users.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: Text('No entries found.')),
+                );
+              }
+
+              final top3 = users.take(3).toList();
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Podium
+                  if (top3.length >= 3) _PodiumView(top3: top3),
+                  const SizedBox(height: 18),
+
+                  // Rest of Leaderboard
+                  const Text(
+                    'Rankings',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...users.map((u) => _UserRankTile(
+                        user: u,
+                        category: currentCategory,
+                      )),
+                ],
+              );
+            },
           ),
         ],
       ),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Achievements & Gamification Hub (My PRs, Challenges, Badges)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GamificationHubRow extends StatelessWidget {
+  const _GamificationHubRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _HubCard(
+            icon: Icons.emoji_events_rounded,
+            title: 'My PRs',
+            subtitle: 'Records',
+            color: AppTheme.accentOrange,
+            onTap: () => context.pushNamed('personalRecords'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _HubCard(
+            icon: Icons.flag_rounded,
+            title: 'Challenges',
+            subtitle: 'Missions',
+            color: Colors.deepOrange,
+            onTap: () => context.pushNamed('challenges'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _HubCard(
+            icon: Icons.military_tech_rounded,
+            title: 'Badges',
+            subtitle: 'Milestones',
+            color: AppTheme.primaryGreen,
+            onTap: () => context.pushNamed('badges'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HubCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _HubCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          decoration: BoxDecoration(
+            color: theme.cardTheme.color,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200,
+            ),
+            boxShadow: isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 20, color: color),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Category Filter Chip
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _CategoryChip extends StatelessWidget {
   final String label;
@@ -151,6 +309,10 @@ class _CategoryChip extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Podium View (Top 3)
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _PodiumView extends StatelessWidget {
   final List<LeaderboardUserEntity> top3;
@@ -285,6 +447,10 @@ class _PodiumColumn extends StatelessWidget {
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User Rank Tile
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _UserRankTile extends StatelessWidget {
   final LeaderboardUserEntity user;
