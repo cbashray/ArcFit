@@ -34,9 +34,9 @@ class MainNavigationScaffold extends StatelessWidget {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded, color: AppTheme.primaryGreen),
-            label: 'Home',
+            icon: Icon(Icons.dashboard_outlined),
+            selectedIcon: Icon(Icons.dashboard_rounded, color: AppTheme.primaryGreen),
+            label: 'Dashboard',
           ),
           NavigationDestination(
             icon: Icon(Icons.leaderboard_outlined),
