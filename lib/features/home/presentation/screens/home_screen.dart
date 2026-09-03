@@ -65,11 +65,6 @@ class HomeScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.emoji_events_outlined),
-            tooltip: 'Badges',
-            onPressed: () => context.pushNamed('badges'),
-          ),
-          IconButton(
             icon: const Icon(Icons.settings_outlined),
             tooltip: 'Settings',
             onPressed: () => context.pushNamed('settings'),
@@ -164,7 +159,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
 
-            // Quick actions — 3 rows of 2
+            // Quick actions — 2 rows of 2
             const Text(
               'Explore',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
@@ -200,91 +195,11 @@ class HomeScreen extends ConsumerWidget {
                   route: 'progress',
                 ),
                 _ActionTileData(
-                  icon: Icons.restaurant_menu_rounded,
-                  label: 'Nutrition',
-                  subtitle: 'Track your diet',
-                  color: Colors.teal,
-                  route: 'nutrition',
-                ),
-              ],
-              onTap: (route) => context.pushNamed(route),
-            ),
-            const SizedBox(height: 10),
-            _QuickActionRow(
-              tiles: [
-                _ActionTileData(
-                  icon: Icons.smart_toy_rounded,
-                  label: 'AI Coach',
-                  subtitle: 'Ask anything',
-                  color: Colors.indigo,
-                  route: 'fitnessCoach',
-                ),
-                _ActionTileData(
-                  icon: Icons.emoji_events_rounded,
-                  label: 'My PRs',
-                  subtitle: 'Personal records',
-                  color: AppTheme.accentOrange,
-                  route: 'personalRecords',
-                ),
-              ],
-              onTap: (route) => context.pushNamed(route),
-            ),
-            const SizedBox(height: 10),
-            _QuickActionRow(
-              tiles: [
-                _ActionTileData(
-                  icon: Icons.bookmark_added_rounded,
-                  label: 'Templates',
-                  subtitle: 'Pre-built & custom',
-                  color: Colors.deepPurple,
-                  route: 'workoutTemplates',
-                ),
-                _ActionTileData(
-                  icon: Icons.flag_rounded,
-                  label: 'Challenges',
-                  subtitle: 'Weekly missions',
-                  color: Colors.deepOrange,
-                  route: 'challenges',
-                ),
-              ],
-              onTap: (route) => context.pushNamed(route),
-            ),
-            const SizedBox(height: 10),
-            _QuickActionRow(
-              tiles: [
-                _ActionTileData(
                   icon: Icons.checklist_rounded,
                   label: 'Habits',
                   subtitle: 'Daily routines',
-                  color: AppTheme.primaryGreen,
-                  route: 'habits',
-                ),
-                _ActionTileData(
-                  icon: Icons.analytics_rounded,
-                  label: 'Reports',
-                  subtitle: 'Weekly & Monthly',
-                  color: Colors.teal,
-                  route: 'summaryReport',
-                ),
-              ],
-              onTap: (route) => context.pushNamed(route),
-            ),
-            const SizedBox(height: 10),
-            _QuickActionRow(
-              tiles: [
-                _ActionTileData(
-                  icon: Icons.leaderboard_rounded,
-                  label: 'Leaderboard',
-                  subtitle: 'Podium & ranks',
-                  color: AppTheme.secondaryBlue,
-                  route: 'leaderboard',
-                ),
-                _ActionTileData(
-                  icon: Icons.emoji_events_rounded,
-                  label: 'Badges',
-                  subtitle: 'Milestones & XP',
                   color: AppTheme.accentOrange,
-                  route: 'badges',
+                  route: 'habits',
                 ),
               ],
               onTap: (route) => context.pushNamed(route),
