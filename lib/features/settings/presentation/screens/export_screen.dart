@@ -43,15 +43,15 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       }
 
       final fileName =
-          'fitx_workouts_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
+          'onyxfit_workouts_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
       final csvBytes = Uint8List.fromList(utf8.encode(buf.toString()));
 
       await saveAndShareFile(
         bytes: csvBytes,
         fileName: fileName,
         mimeType: 'text/csv',
-        shareText: 'My FitX workout history',
-        shareSubject: 'FitX Workout History',
+        shareText: 'My OnyxFit workout history',
+        shareSubject: 'OnyxFit Workout History',
       );
 
       _showSnack('Workouts exported successfully as CSV! 📊');

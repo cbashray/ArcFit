@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/providers/app_providers.dart';
 import '../../../../auth/presentation/providers/auth_providers.dart';
-import '../../../../home/presentation/screens/home_screen.dart';
 import '../../../../workouts/presentation/providers/workout_providers.dart';
 import '../../data/repos/local_challenge_repository.dart';
 import '../../data/repos/local_leaderboard_repository.dart';

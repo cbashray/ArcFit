@@ -57,8 +57,8 @@ class NotificationService {
     required String body,
   }) async {
     const android = AndroidNotificationDetails(
-      'fitx_channel',
-      'FitX Notifications',
+      'onyxfit_channel',
+      'OnyxFit Notifications',
       channelDescription: 'Workout & Fitness Reminders',
       importance: Importance.high,
       priority: Priority.high,

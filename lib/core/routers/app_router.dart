@@ -12,7 +12,6 @@ import '../../features/exercise_library/presentation/screens/exercise_browse_scr
 import '../../features/exercise_library/presentation/screens/exercise_detail_screen.dart';
 import '../../features/habits/presentation/screens/habit_tracker_screen.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
-import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/nutrition/presentation/screens/food_search_screen.dart';
 import '../../features/nutrition/presentation/screens/nutrition_screen.dart';
 import '../../features/progress/presentation/screens/body_metrics_screen.dart';
@@ -32,7 +31,6 @@ import '../../features/workouts/presentation/screens/workout_templates_screen.da
 class AppRoutes {
   static const String auth = '/';
   static const String dashboard = '/dashboard';
-  static const String home = '/home';
   static const String workoutLogging = '/workout';
   static const String generateWorkout = '/generate-workout';
   static const String exerciseLibrary = '/exercise-library';
@@ -53,8 +51,13 @@ class AppRoutes {
   static const String export = '/export';
 }
 
-/// Global navigator key
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
+/// Navigator keys for root and branches
+final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+final _dashboardNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'dashboard');
+final _leaderboardNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'leaderboard');
+final _workoutNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'workout');
+final _nutritionNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'nutrition');
+final _coachNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'coach');
 
 /// Router with auth-aware redirect and persistent 5-tab bottom navigation shell.
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -102,6 +105,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         branches: [
           // Tab 0: Dashboard
           StatefulShellBranch(
+            navigatorKey: _dashboardNavigatorKey,
             routes: [
               GoRoute(
                 path: AppRoutes.dashboard,
@@ -113,6 +117,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
           // Tab 1: Leaderboard
           StatefulShellBranch(
+            navigatorKey: _leaderboardNavigatorKey,
             routes: [
               GoRoute(
                 path: AppRoutes.leaderboard,
@@ -124,6 +129,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
           // Tab 2: Workout / Templates
           StatefulShellBranch(
+            navigatorKey: _workoutNavigatorKey,
             routes: [
               GoRoute(
                 path: AppRoutes.workoutTemplates,
@@ -135,6 +141,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
           // Tab 3: Nutrition / Food Tracker
           StatefulShellBranch(
+            navigatorKey: _nutritionNavigatorKey,
             routes: [
               GoRoute(
                 path: AppRoutes.nutrition,
@@ -146,6 +153,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
           // Tab 4: AI Coach
           StatefulShellBranch(
+            navigatorKey: _coachNavigatorKey,
             routes: [
               GoRoute(
                 path: AppRoutes.fitnessCoach,
@@ -159,54 +167,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // ── Modal & Secondary Screens (Presented on top of shell) ──────────────
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
-        path: AppRoutes.home,
-        name: 'home_full',
-        builder: (context, state) => const HomeScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.workoutLogging,
         name: 'workoutLogging',
         builder: (context, state) => const WorkoutLoggingScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.generateWorkout,
         name: 'generateWorkout',
         builder: (context, state) => const AdaptiveWorkoutScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.exerciseLibrary,
         name: 'exerciseLibrary',
         builder: (context, state) => const ExerciseBrowseScreen(),
-        routes: [
-          GoRoute(
-            parentNavigatorKey: _rootNavigatorKey,
-            path: 'detail',
-            name: 'exerciseDetail',
-            builder: (context, state) {
-              final exercise = state.extra! as ExerciseEntity;
-              return ExerciseDetailScreen(exercise: exercise);
-            },
-          ),
-        ],
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.exerciseDetail,
+        name: 'exerciseDetail',
+        builder: (context, state) {
+          final exercise = state.extra! as ExerciseEntity;
+          return ExerciseDetailScreen(exercise: exercise);
+        },
+      ),
+      GoRoute(
         path: AppRoutes.progress,
         name: 'progress',
         builder: (context, state) => const ProgressScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.bodyMetrics,
         name: 'bodyMetrics',
         builder: (context, state) => const BodyMetricsScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.addFood,
         name: 'addFood',
         builder: (context, state) {
@@ -215,43 +208,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.badges,
         name: 'badges',
         builder: (context, state) => const BadgesScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.challenges,
         name: 'challenges',
         builder: (context, state) => const ChallengesScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.habits,
         name: 'habits',
         builder: (context, state) => const HabitTrackerScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.summaryReport,
         name: 'summaryReport',
         builder: (context, state) => const SummaryReportScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.personalRecords,
         name: 'personalRecords',
         builder: (context, state) => const PersonalRecordsScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.settings,
         name: 'settings',
         builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
-        parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.export,
         name: 'export',
         builder: (context, state) => const ExportScreen(),

@@ -39,6 +39,31 @@ class WorkoutsNotifier extends AsyncNotifier<List<WorkoutEntity>> {
   }
 }
 
+/// Consecutive-day workout streak ending today or yesterday.
+final streakProvider = FutureProvider<int>((ref) async {
+  final workouts = await ref.watch(workoutsProvider.future);
+  if (workouts.isEmpty) return 0;
+
+  final workoutDays = workouts
+      .map((w) => DateTime(w.date.year, w.date.month, w.date.day))
+      .toSet();
+
+  var streak = 0;
+  var day = DateTime.now();
+  day = DateTime(day.year, day.month, day.day);
+
+  // A streak can start today or yesterday.
+  if (!workoutDays.contains(day)) {
+    day = day.subtract(const Duration(days: 1));
+  }
+
+  while (workoutDays.contains(day)) {
+    streak++;
+    day = day.subtract(const Duration(days: 1));
+  }
+  return streak;
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Personal Records
 // ─────────────────────────────────────────────────────────────────────────────

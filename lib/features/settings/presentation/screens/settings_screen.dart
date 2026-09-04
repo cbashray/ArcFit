@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/providers/app_providers.dart';
 import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../auth/domain/entities/user_entity.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../widgets/edit_profile_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -59,6 +62,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final notif = ref.watch(notificationServiceProvider);
+    final user = ref.watch(authNotifierProvider).valueOrNull?.user;
 
     final timeOfDay = TimeOfDay(hour: _reminderHour, minute: _reminderMinute);
     final formattedTime = timeOfDay.format(context);
@@ -68,6 +72,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // ─── Profile ───────────────────────────────────────────────────────
+          const _SectionHeader(label: 'Profile'),
+          _ProfileCard(
+            user: user,
+            onEdit: () {
+              if (user != null) {
+                EditProfileSheet.show(context, user);
+              }
+            },
+          ),
+          const SizedBox(height: 20),
+
           // ─── Appearance ───────────────────────────────────────────────────
           const _SectionHeader(label: 'Appearance'),
           Card(
@@ -224,9 +240,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       fit: BoxFit.cover,
                     ),
                   ),
-                  title: const Text('FitX',
+                  title: const Text(AppConstants.appName,
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Version 1.0.0 — AI-powered fitness tracker',
+                  subtitle: const Text('Version ${AppConstants.appVersion} — AI-powered fitness tracker',
                       style: TextStyle(fontSize: 12)),
                 ),
                 const Divider(height: 1, indent: 56),
@@ -386,6 +402,225 @@ class _ThemeSegmentedButton extends StatelessWidget {
       style: const ButtonStyle(
         visualDensity: VisualDensity.compact,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+}
+
+class _ProfileCard extends StatelessWidget {
+  final UserEntity? user;
+  final VoidCallback onEdit;
+
+  const _ProfileCard({
+    required this.user,
+    required this.onEdit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final avatarEmoji = user?.avatarEmoji ?? '⚡';
+    final name =
+        (user != null && user!.name.isNotEmpty) ? user!.name : 'Athlete';
+    final email = user?.email ?? '';
+
+    final hasStats = user != null &&
+        (user!.age != null ||
+            user!.gender != null ||
+            user!.height != null ||
+            user!.weight != null);
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onEdit,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  // Emoji Avatar with glow and edit badge
+                  Stack(
+                    children: [
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppTheme.primaryGreen.withValues(alpha: 0.15),
+                          border: Border.all(
+                            color: AppTheme.primaryGreen.withValues(alpha: 0.6),
+                            width: 2,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          avatarEmoji,
+                          style: const TextStyle(fontSize: 28),
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryGreen,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isDark
+                                  ? const Color(0xFF1E1E1E)
+                                  : Colors.white,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.edit,
+                            size: 10,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 14),
+                  // Name and Email
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (email.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            email,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  // Edit Action Button
+                  IconButton.filledTonal(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    tooltip: 'Edit Profile',
+                    style: IconButton.styleFrom(
+                      backgroundColor:
+                          AppTheme.primaryGreen.withValues(alpha: 0.12),
+                      foregroundColor: AppTheme.primaryGreen,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+              // Profile Stats summary row
+              if (hasStats)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (user!.age != null)
+                      _StatChip(
+                        icon: Icons.cake_outlined,
+                        label: '${user!.age} yrs',
+                      ),
+                    if (user!.gender != null && user!.gender!.isNotEmpty)
+                      _StatChip(
+                        icon: Icons.wc_rounded,
+                        label: user!.gender!,
+                      ),
+                    if (user!.height != null)
+                      _StatChip(
+                        icon: Icons.height_rounded,
+                        label:
+                            '${user!.height!.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '')} cm',
+                      ),
+                    if (user!.weight != null)
+                      _StatChip(
+                        icon: Icons.fitness_center_rounded,
+                        label:
+                            '${user!.weight!.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '')} kg',
+                      ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.add_circle_outline_rounded,
+                      size: 16,
+                      color: AppTheme.primaryGreen,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Tap to set age, gender, height & weight',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.primaryGreen,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _StatChip({
+    required this.icon,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: Colors.grey.shade500),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

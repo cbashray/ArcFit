@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
-import '../../../home/presentation/screens/home_screen.dart';
 import '../../../workouts/domain/entities/workout_entity.dart';
 import '../../../workouts/presentation/providers/workout_providers.dart';
 import '../../gamification/gamification.dart';

@@ -141,10 +141,12 @@ class _WorkoutTemplatesScreenState
   @override
   Widget build(BuildContext context) {
     final templatesAsync = ref.watch(workoutTemplatesProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Workout Templates 📋'),
+        title: const Text('Workout Hub 🏋️'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_rounded),
@@ -154,11 +156,54 @@ class _WorkoutTemplatesScreenState
         ],
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ─── AI Workout & Exercise Library Feature Cards ─────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _HubFeatureCard(
+                    icon: Icons.auto_awesome_rounded,
+                    title: 'AI Workout',
+                    subtitle: 'Generate smart plan',
+                    gradientColors: const [Color(0xFF7B2CBF), Color(0xFF5A189A)],
+                    onTap: () => context.pushNamed('generateWorkout'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _HubFeatureCard(
+                    icon: Icons.menu_book_rounded,
+                    title: 'Exercise Library',
+                    subtitle: 'Browse 100+ moves',
+                    gradientColors: const [Color(0xFF0077B6), Color(0xFF023E8A)],
+                    onTap: () => context.pushNamed('exerciseLibrary'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ─── Section Header ──────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Text(
+              'WORKOUT TEMPLATES',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.1,
+                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              ),
+            ),
+          ),
+
           // Category filter bar
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
               children: [
                 ChoiceChip(
@@ -238,6 +283,84 @@ class _WorkoutTemplatesScreenState
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HubFeatureCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final List<Color> gradientColors;
+  final VoidCallback onTap;
+
+  const _HubFeatureCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.gradientColors,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: gradientColors,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: gradientColors.first.withValues(alpha: 0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: Colors.white, size: 20),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

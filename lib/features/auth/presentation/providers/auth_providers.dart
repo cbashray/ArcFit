@@ -87,4 +87,32 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     await ref.read(authRepositoryProvider).signOut();
     state = const AsyncValue.data(AuthState(null));
   }
+
+  /// Updates profile details and refreshes local auth state.
+  /// Returns error string on failure, or null on success.
+  Future<String?> updateProfile({
+    required String name,
+    int? age,
+    String? gender,
+    double? height,
+    double? weight,
+    String? avatarEmoji,
+  }) async {
+    try {
+      final updatedUser = await ref.read(authRepositoryProvider).updateProfile(
+            name: name,
+            age: age,
+            gender: gender,
+            height: height,
+            weight: weight,
+            avatarEmoji: avatarEmoji,
+          );
+      state = AsyncValue.data(AuthState(updatedUser));
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return e.toString();
+    }
+  }
 }

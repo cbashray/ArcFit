@@ -34,7 +34,7 @@ void main() {
     await pumpApp(tester);
 
     // Auth screen is visible
-    expect(find.text('FitX'), findsOneWidget);
+    expect(find.text('OnyxFit'), findsOneWidget);
     expect(find.text('Try Demo Account'), findsOneWidget);
 
     // Sign in with the demo account

@@ -56,7 +56,7 @@ class CoachChatNotifier extends Notifier<CoachChatState> {
           id: 'welcome',
           role: ChatRole.model,
           content:
-              "Hey! 👋 I'm your FitX AI Coach. I can help you with workout tips, nutrition advice, recovery strategies, and more. What's on your mind today?",
+              "Hey! 👋 I'm your OnyxFit AI Coach. I can help you with workout tips, nutrition advice, recovery strategies, and more. What's on your mind today?",
           timestamp: DateTime.now(),
         ),
       ],
@@ -132,7 +132,7 @@ class CoachChatNotifier extends Notifier<CoachChatState> {
     }
     if (query.contains('beginner') || query.contains('start') ||
         query.contains('new')) {
-      return '🌟 Welcome to your fitness journey! Start with:\n• **3 days/week** full-body workouts\n• Master the **big 5**: squat, deadlift, bench, row, overhead press\n• Focus on **form over weight** for first 3 months\n• **Progressive overload**: add a small amount each week\n• Track everything in FitX — data drives progress!';
+      return '🌟 Welcome to your fitness journey! Start with:\n• **3 days/week** full-body workouts\n• Master the **big 5**: squat, deadlift, bench, row, overhead press\n• Focus on **form over weight** for first 3 months\n• **Progressive overload**: add a small amount each week\n• Track everything in OnyxFit — data drives progress!';
     }
     return '🤔 Great question! As your AI coach, I\'d suggest focusing on consistency above all else. Log your workouts daily, track your nutrition, and aim to progressively overload each week. Small improvements compound into massive results over time. What specific aspect of your training would you like to optimize?';
   }

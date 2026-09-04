@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../home/presentation/screens/home_screen.dart'; // streakProvider
+import '../../../workouts/presentation/providers/workout_providers.dart';
 import '../providers/dashboard_providers.dart';
 
 /// Dashboard Screen – aggregated fitness overview.
@@ -81,16 +81,18 @@ class DashboardScreen extends ConsumerWidget {
             const SizedBox(height: 10),
             _QuickActionsRow(
               onStartWorkout: () => context.goNamed('workoutLogging'),
+              onProgress: () => context.pushNamed('progress'),
               onBodyStats: () => context.pushNamed('bodyMetrics'),
-              onHabits: () => context.pushNamed('habits'),
             ),
             const SizedBox(height: 24),
 
-            // ── Explore (link to full Home) ─────────────────
-            _ExploreCard(
-              onTap: () => context.pushNamed('home_full'),
+            // ── Progress & Analytics Card ───────────────────
+            const _SectionTitle(title: 'Progress & Analytics'),
+            const SizedBox(height: 10),
+            _ProgressDashboardCard(
+              onTap: () => context.pushNamed('progress'),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -447,13 +449,13 @@ class _WeeklyActivityChart extends ConsumerWidget {
 
 class _QuickActionsRow extends StatelessWidget {
   final VoidCallback onStartWorkout;
+  final VoidCallback onProgress;
   final VoidCallback onBodyStats;
-  final VoidCallback onHabits;
 
   const _QuickActionsRow({
     required this.onStartWorkout,
+    required this.onProgress,
     required this.onBodyStats,
-    required this.onHabits,
   });
 
   @override
@@ -471,19 +473,19 @@ class _QuickActionsRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _QuickActionButton(
-            icon: Icons.monitor_weight_outlined,
-            label: 'Body\nStats',
-            color: AppTheme.secondaryBlue,
-            onTap: onBodyStats,
+            icon: Icons.show_chart_rounded,
+            label: 'Progress\nCharts',
+            color: Colors.deepPurple,
+            onTap: onProgress,
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _QuickActionButton(
-            icon: Icons.checklist_rounded,
-            label: 'Daily\nHabits',
-            color: AppTheme.accentOrange,
-            onTap: onHabits,
+            icon: Icons.monitor_weight_outlined,
+            label: 'Body\nStats',
+            color: AppTheme.secondaryBlue,
+            onTap: onBodyStats,
           ),
         ),
       ],
@@ -564,69 +566,165 @@ class _QuickActionButton extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Explore Card (link to full Home screen)
+// Progress & Analytics Dashboard Card
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ExploreCard extends StatelessWidget {
+class _ProgressDashboardCard extends ConsumerWidget {
   final VoidCallback onTap;
 
-  const _ExploreCard({required this.onTap});
+  const _ProgressDashboardCard({required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final workoutsAsync = ref.watch(workoutsProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final workouts = workoutsAsync.valueOrNull ?? [];
+    final totalWorkouts = workouts.length;
+    final totalVolume = workouts.fold<double>(
+      0,
+      (sum, w) =>
+          sum +
+          w.exercises.fold<double>(
+            0,
+            (eSum, e) => eSum + ((e.weight ?? 0) * e.reps * e.sets),
+          ),
+    );
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppTheme.primaryGreen, AppTheme.primaryDark],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: theme.cardTheme.color,
             borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade200,
+            ),
           ),
-          child: Row(
+          child: Column(
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.explore_rounded,
-                    size: 26, color: Colors.white),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Explore All Features',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.deepPurple.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    SizedBox(height: 2),
-                    Text(
-                      'AI Workouts, Exercises, Habits & Progress',
-                      style: TextStyle(fontSize: 12, color: Colors.white70),
+                    child: const Icon(Icons.analytics_rounded,
+                        color: Colors.deepPurple, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Performance Analytics',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Volume, strength gains & PR history',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                ],
               ),
-              const Icon(Icons.chevron_right_rounded, color: Colors.white),
+              const SizedBox(height: 14),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ProgressStatPill(
+                      label: 'Total Lifted',
+                      value: totalVolume >= 1000
+                          ? '${(totalVolume / 1000).toStringAsFixed(1)}k kg'
+                          : '${totalVolume.round()} kg',
+                      icon: Icons.fitness_center_rounded,
+                      color: AppTheme.primaryGreen,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ProgressStatPill(
+                      label: 'Logged Sessions',
+                      value: '$totalWorkouts',
+                      icon: Icons.history_rounded,
+                      color: AppTheme.secondaryBlue,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ProgressStatPill extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const _ProgressStatPill({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF252525) : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? const Color(0xFF333333) : Colors.grey.shade200,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

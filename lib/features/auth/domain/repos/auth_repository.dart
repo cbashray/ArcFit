@@ -29,4 +29,14 @@ abstract class AuthRepository {
 
   /// Sign out the current user.
   Future<void> signOut();
+
+  /// Update the current user's profile information.
+  Future<UserEntity> updateProfile({
+    required String name,
+    int? age,
+    String? gender,
+    double? height,
+    double? weight,
+    String? avatarEmoji,
+  });
 }

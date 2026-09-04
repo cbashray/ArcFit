@@ -1,7 +1,7 @@
-/// App Constants for FitX
+/// App Constants for OnyxFit
 class AppConstants {
   // App info
-  static const String appName = 'FitX';
+  static const String appName = 'OnyxFit';
   static const String appVersion = '1.0.0';
 
   // Feature flags

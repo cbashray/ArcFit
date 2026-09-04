@@ -101,4 +101,36 @@ class LocalAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() => _prefs.remove(_sessionKey);
+
+  @override
+  Future<UserEntity> updateProfile({
+    required String name,
+    int? age,
+    String? gender,
+    double? height,
+    double? weight,
+    String? avatarEmoji,
+  }) async {
+    final id = _prefs.getString(_sessionKey);
+    if (id == null) {
+      throw const AuthException('No active user session to update.');
+    }
+
+    final users = _readUsers();
+    final userMap = users[id];
+    if (userMap == null) {
+      throw const AuthException('User not found in local storage.');
+    }
+
+    userMap['name'] = name.trim();
+    userMap['age'] = age;
+    userMap['gender'] = gender;
+    userMap['height'] = height;
+    userMap['weight'] = weight;
+    userMap['avatar_emoji'] = avatarEmoji;
+
+    users[id] = userMap;
+    await _writeUsers(users);
+    return UserEntity.fromMap(userMap);
+  }
 }

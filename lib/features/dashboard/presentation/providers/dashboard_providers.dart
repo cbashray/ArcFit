@@ -114,9 +114,3 @@ final weeklyActivityProvider =
   }
   return result;
 });
-
-// ─── Re-export streakProvider for dashboard use ──────────────────────────────
-
-// The streakProvider is already defined in home_screen.dart and computes
-// the consecutive-day workout streak. We import it above so the dashboard
-// screen can reference it via this file.

@@ -16,7 +16,8 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<UserEntity?> getCurrentUser() async {
     final sbUser = _client.auth.currentUser;
     if (sbUser != null) {
-      final name = sbUser.userMetadata?['name'] as String? ??
+      final meta = sbUser.userMetadata ?? {};
+      final name = meta['name'] as String? ??
           sbUser.email?.split('@').first ??
           'User';
 
@@ -24,6 +25,11 @@ class SupabaseAuthRepository implements AuthRepository {
         id: sbUser.id,
         email: sbUser.email ?? '',
         name: name,
+        age: (meta['age'] as num?)?.toInt(),
+        gender: meta['gender'] as String?,
+        height: (meta['height'] as num?)?.toDouble(),
+        weight: (meta['weight'] as num?)?.toDouble(),
+        avatarEmoji: meta['avatar_emoji'] as String?,
         preferences: const {},
         createdAt: DateTime.tryParse(sbUser.createdAt) ?? DateTime.now(),
       );
@@ -54,7 +60,8 @@ class SupabaseAuthRepository implements AuthRepository {
         throw const AuthException('Sign in failed: user not found.');
       }
 
-      final name = user.userMetadata?['name'] as String? ??
+      final meta = user.userMetadata ?? {};
+      final name = meta['name'] as String? ??
           user.email?.split('@').first ??
           'User';
 
@@ -62,6 +69,11 @@ class SupabaseAuthRepository implements AuthRepository {
         id: user.id,
         email: user.email ?? email,
         name: name,
+        age: (meta['age'] as num?)?.toInt(),
+        gender: meta['gender'] as String?,
+        height: (meta['height'] as num?)?.toDouble(),
+        weight: (meta['weight'] as num?)?.toDouble(),
+        avatarEmoji: meta['avatar_emoji'] as String?,
         preferences: const {},
         createdAt: DateTime.tryParse(user.createdAt) ?? DateTime.now(),
       );
@@ -133,5 +145,74 @@ class SupabaseAuthRepository implements AuthRepository {
     try {
       await _client.auth.signOut();
     } catch (_) {}
+  }
+
+  @override
+  Future<UserEntity> updateProfile({
+    required String name,
+    int? age,
+    String? gender,
+    double? height,
+    double? weight,
+    String? avatarEmoji,
+  }) async {
+    final Map<String, dynamic> data = {
+      'name': name.trim(),
+      'age': age,
+      'gender': gender,
+      'height': height,
+      'weight': weight,
+      'avatar_emoji': avatarEmoji,
+    };
+
+    try {
+      final res = await _client.auth.updateUser(
+        sb.UserAttributes(data: data),
+      );
+      final user = res.user;
+      if (user != null) {
+        final meta = user.userMetadata ?? {};
+        final updatedUser = UserEntity(
+          id: user.id,
+          email: user.email ?? '',
+          name: name.trim(),
+          age: (meta['age'] as num?)?.toInt() ?? age,
+          gender: (meta['gender'] as String?) ?? gender,
+          height: (meta['height'] as num?)?.toDouble() ?? height,
+          weight: (meta['weight'] as num?)?.toDouble() ?? weight,
+          avatarEmoji: (meta['avatar_emoji'] as String?) ?? avatarEmoji,
+          preferences: const {},
+          createdAt: DateTime.tryParse(user.createdAt) ?? DateTime.now(),
+        );
+
+        if (_fallback != null) {
+          try {
+            await _fallback.updateProfile(
+              name: name,
+              age: age,
+              gender: gender,
+              height: height,
+              weight: weight,
+              avatarEmoji: avatarEmoji,
+            );
+          } catch (_) {}
+        }
+
+        return updatedUser;
+      }
+    } catch (_) {}
+
+    if (_fallback != null) {
+      return await _fallback.updateProfile(
+        name: name,
+        age: age,
+        gender: gender,
+        height: height,
+        weight: weight,
+        avatarEmoji: avatarEmoji,
+      );
+    }
+
+    throw const AuthException('Failed to update profile.');
   }
 }
