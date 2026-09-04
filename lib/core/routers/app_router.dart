@@ -11,6 +11,7 @@ import '../../features/exercise_library/domain/entities/exercise_entity.dart';
 import '../../features/exercise_library/presentation/screens/exercise_browse_screen.dart';
 import '../../features/exercise_library/presentation/screens/exercise_detail_screen.dart';
 import '../../features/habits/presentation/screens/habit_tracker_screen.dart';
+import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/nutrition/presentation/screens/food_search_screen.dart';
 import '../../features/nutrition/presentation/screens/nutrition_screen.dart';
@@ -30,6 +31,7 @@ import '../../features/workouts/presentation/screens/workout_templates_screen.da
 /// Route paths for consistent navigation
 class AppRoutes {
   static const String auth = '/';
+  static const String dashboard = '/dashboard';
   static const String home = '/home';
   static const String workoutLogging = '/workout';
   static const String generateWorkout = '/generate-workout';
@@ -81,7 +83,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (isLoading) return null;
 
       if (!signedIn && !onAuthScreen) return AppRoutes.auth;
-      if (signedIn && onAuthScreen) return AppRoutes.home;
+      if (signedIn && onAuthScreen) return AppRoutes.dashboard;
       return null;
     },
     routes: [
@@ -98,13 +100,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return MainNavigationScaffold(navigationShell: navigationShell);
         },
         branches: [
-          // Tab 0: Home
+          // Tab 0: Dashboard
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: AppRoutes.home,
-                name: 'home',
-                builder: (context, state) => const HomeScreen(),
+                path: AppRoutes.dashboard,
+                name: 'dashboard',
+                builder: (context, state) => const DashboardScreen(),
               ),
             ],
           ),
@@ -156,6 +158,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       // ── Modal & Secondary Screens (Presented on top of shell) ──────────────
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.home,
+        name: 'home_full',
+        builder: (context, state) => const HomeScreen(),
+      ),
       GoRoute(
         parentNavigatorKey: _rootNavigatorKey,
         path: AppRoutes.workoutLogging,

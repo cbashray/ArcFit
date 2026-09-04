@@ -41,10 +41,10 @@ void main() {
     await tester.tap(find.text('Try Demo Account'));
     await tester.pumpAndSettle();
 
-    // Home dashboard is visible
-    expect(find.text('Start Workout'), findsOneWidget);
-    expect(find.text('Explore'), findsOneWidget);
-    expect(find.text('Recent Workouts'), findsOneWidget);
+    // Dashboard is visible (replaced the old Home screen as Tab 0)
+    expect(find.text("Today's Progress"), findsOneWidget);
+    expect(find.text('Weekly Activity'), findsOneWidget);
+    expect(find.text('Quick Actions'), findsOneWidget);
   });
 
   testWidgets('sign-up validation blocks invalid email', (tester) async {
