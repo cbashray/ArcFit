@@ -11,8 +11,8 @@ import '../../domain/entities/user_entity.dart';
 import '../../domain/repos/auth_repository.dart';
 
 class LocalAuthRepository implements AuthRepository {
-  static const _usersKey = 'fitx_users';
-  static const _sessionKey = 'fitx_session_user_id';
+  static const _usersKey = 'arcfit_users';
+  static const _sessionKey = 'arcfit_session_user_id';
 
   final SharedPreferences _prefs;
 
@@ -34,8 +34,18 @@ class LocalAuthRepository implements AuthRepository {
   Future<UserEntity?> getCurrentUser() async {
     final id = _prefs.getString(_sessionKey);
     if (id == null) return null;
-    final user = _readUsers()[id];
+    final users = _readUsers();
+    final user = users[id];
     if (user == null) return null;
+
+    // Migrate any legacy FitX email branding in existing session
+    final email = user['email'] as String?;
+    if (email != null && email.toLowerCase().contains('fitx.app')) {
+      user['email'] = email.replaceAll(RegExp(r'fitx\.app', caseSensitive: false), 'arcfit.app');
+      users[id] = user;
+      await _writeUsers(users);
+    }
+
     return UserEntity.fromMap(user);
   }
 
@@ -46,9 +56,23 @@ class LocalAuthRepository implements AuthRepository {
   }) async {
     final normalizedEmail = email.trim().toLowerCase();
     final users = _readUsers();
-    final match = users.values.where(
+    var match = users.values.where(
       (u) => (u['email'] as String).toLowerCase() == normalizedEmail,
     );
+
+    // If searching for demo@arcfit.app, fall back to matching legacy demo@fitx.app
+    if (match.isEmpty && normalizedEmail == 'demo@arcfit.app') {
+      match = users.values.where(
+        (u) => (u['email'] as String).toLowerCase() == 'demo@fitx.app',
+      );
+      if (match.isNotEmpty) {
+        final legacyUser = match.first;
+        legacyUser['email'] = 'demo@arcfit.app';
+        users[legacyUser['id'] as String] = legacyUser;
+        await _writeUsers(users);
+        match = [legacyUser];
+      }
+    }
 
     if (match.isEmpty) {
       throw const AuthException(

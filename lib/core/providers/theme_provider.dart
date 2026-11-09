@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../providers/app_providers.dart';
 
-const _themeKey = 'fitx_theme_mode';
+const _themeKey = 'arcfit_theme_mode';
 
 /// Reads/writes the user-chosen [ThemeMode] from SharedPreferences.
 final themeModeProvider =

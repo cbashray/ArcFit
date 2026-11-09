@@ -97,7 +97,7 @@ class _AdaptiveWorkoutScreenState extends ConsumerState<AdaptiveWorkoutScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Tell OnyxFit your goals and available equipment — '
+                    'Tell ArcFit your goals and available equipment — '
                     'it builds an optimal workout plan for you.',
                     style: TextStyle(
                       fontSize: 13,

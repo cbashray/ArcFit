@@ -7,7 +7,7 @@ import '../../domain/entities/workout_entity.dart';
 import '../../domain/repos/workout_repository.dart';
 
 class LocalWorkoutRepository implements WorkoutRepository {
-  static const _workoutsKey = 'fitx_workouts';
+  static const _workoutsKey = 'arcfit_workouts';
 
   final SharedPreferences _prefs;
 

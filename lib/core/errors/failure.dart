@@ -1,4 +1,4 @@
-// Failure models for FitX
+// Failure models for ArcFit
 
 abstract class Failure {
   final String message;

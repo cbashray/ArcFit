@@ -8,8 +8,8 @@ import '../../domain/repos/water_repository.dart';
 
 class LocalWaterRepository implements WaterRepository {
   final SharedPreferences _prefs;
-  static const String _waterLogsKey = 'fitx_water_logs';
-  static const String _waterTargetKey = 'fitx_water_target_ml';
+  static const String _waterLogsKey = 'arcfit_water_logs';
+  static const String _waterTargetKey = 'arcfit_water_target_ml';
 
   LocalWaterRepository(this._prefs);
 

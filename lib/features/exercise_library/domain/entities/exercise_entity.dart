@@ -1,4 +1,4 @@
-/// Exercise Entity for FitX
+/// Exercise Entity for ArcFit
 class ExerciseEntity {
   final String id;
   final String name;

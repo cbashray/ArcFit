@@ -8,8 +8,8 @@ import '../../domain/entities/habit_entity.dart';
 import '../../domain/repos/habit_repository.dart';
 
 class LocalHabitRepository implements HabitRepository {
-  static const String _habitsKey = 'fitx_habits';
-  static const String _completionsKey = 'fitx_habit_completions';
+  static const String _habitsKey = 'arcfit_habits';
+  static const String _completionsKey = 'arcfit_habit_completions';
 
   final SharedPreferences _prefs;
 

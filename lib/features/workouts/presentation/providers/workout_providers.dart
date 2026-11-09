@@ -140,6 +140,29 @@ class DraftExercise {
     this.isWarmup = false,
   });
 
+  /// Defensive getter in case legacy or dynamic code calls .exercise
+  dynamic get exercise => null;
+
+  DraftExercise copyWith({
+    String? exerciseId,
+    String? name,
+    String? muscleGroup,
+    int? sets,
+    int? reps,
+    double? weight,
+    bool? isWarmup,
+  }) {
+    return DraftExercise(
+      exerciseId: exerciseId ?? this.exerciseId,
+      name: name ?? this.name,
+      muscleGroup: muscleGroup ?? this.muscleGroup,
+      sets: sets ?? this.sets,
+      reps: reps ?? this.reps,
+      weight: weight ?? this.weight,
+      isWarmup: isWarmup ?? this.isWarmup,
+    );
+  }
+
   factory DraftExercise.fromExercise(ExerciseEntity exercise) {
     return DraftExercise(
       exerciseId: exercise.id,
@@ -163,6 +186,9 @@ class ActiveWorkout {
     this.exercises = const [],
     required this.startedAt,
   });
+
+  /// Defensive getter in case legacy or dynamic code calls .template
+  dynamic get template => null;
 
   ActiveWorkout copyWith({
     String? title,

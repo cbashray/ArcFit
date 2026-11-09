@@ -1,7 +1,7 @@
-import 'package:fitx/core/providers/app_providers.dart';
-import 'package:fitx/features/shared/gamification/gamification.dart';
-import 'package:fitx/features/workouts/domain/entities/workout_entity.dart';
-import 'package:fitx/features/workouts/presentation/providers/workout_providers.dart';
+import 'package:arcfit/core/providers/app_providers.dart';
+import 'package:arcfit/features/shared/gamification/gamification.dart';
+import 'package:arcfit/features/workouts/domain/entities/workout_entity.dart';
+import 'package:arcfit/features/workouts/presentation/providers/workout_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';

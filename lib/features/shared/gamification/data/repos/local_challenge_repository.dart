@@ -5,7 +5,7 @@ import '../../domain/entities/challenge_entity.dart';
 
 class LocalChallengeRepository {
   final SharedPreferences _prefs;
-  static const String _challengesKey = 'fitx_gamification_challenges';
+  static const String _challengesKey = 'arcfit_gamification_challenges';
 
   LocalChallengeRepository(this._prefs);
 

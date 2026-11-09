@@ -1,4 +1,4 @@
-// Exercise Repository Interface for FitX
+// Exercise Repository Interface for ArcFit
 import '../entities/exercise_entity.dart';
 
 abstract class ExerciseRepository {

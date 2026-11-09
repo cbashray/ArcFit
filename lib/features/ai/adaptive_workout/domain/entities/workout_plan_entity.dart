@@ -1,4 +1,4 @@
-/// Workout Plan Entity for FitX AI Adaptive Workouts
+/// Workout Plan Entity for ArcFit AI Adaptive Workouts
 class WorkoutPlanEntity {
   final String id;
   final String userId;

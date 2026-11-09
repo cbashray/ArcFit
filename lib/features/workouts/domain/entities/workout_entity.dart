@@ -1,4 +1,4 @@
-/// Workout Entity for FitX
+/// Workout Entity for ArcFit
 class WorkoutEntity {
   final String id;
   final String userId;
@@ -154,6 +154,17 @@ class WorkoutExerciseEntity {
     this.notes,
     required this.performedAt,
   });
+
+  String get muscleGroup {
+    final lower = exerciseName.toLowerCase();
+    if (lower.contains('bench') || lower.contains('chest') || lower.contains('push-up') || lower.contains('fly')) return 'Chest';
+    if (lower.contains('pull') || lower.contains('row') || lower.contains('lat') || lower.contains('deadlift')) return 'Back';
+    if (lower.contains('squat') || lower.contains('leg') || lower.contains('lunge') || lower.contains('calf') || lower.contains('quad')) return 'Legs';
+    if (lower.contains('press') || lower.contains('deltoid') || lower.contains('lateral') || lower.contains('shoulder')) return 'Shoulders';
+    if (lower.contains('curl') || lower.contains('tricep') || lower.contains('bicep') || lower.contains('dip')) return 'Arms';
+    if (lower.contains('crunch') || lower.contains('plank') || lower.contains('core') || lower.contains('ab')) return 'Core';
+    return 'Full Body';
+  }
 
   factory WorkoutExerciseEntity.fromMap(Map<String, dynamic> map) {
     return WorkoutExerciseEntity(

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/constants/app_constants.dart';
-import '../../../../core/providers/app_providers.dart';
-import '../../../../core/providers/theme_provider.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../auth/domain/entities/user_entity.dart';
-import '../../../auth/presentation/providers/auth_providers.dart';
-import '../widgets/edit_profile_sheet.dart';
+import '../../../../core/theme/app_theme.dart'
+    show AppTheme;
+import '../../../../core/providers/theme_provider.dart'
+    show themeModeProvider;
+import '../../../../features/shared/presentation/widgets/ui_components_export.dart';
+import '../../../auth/domain/entities/user_entity.dart' show UserEntity;
+import '../../../auth/presentation/providers/auth_providers.dart' show authNotifierProvider;
+import '../widgets/edit_profile_sheet.dart' show EditProfileSheet;
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -18,288 +20,213 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  late bool _reminderEnabled;
-  late int _reminderHour;
-  late int _reminderMinute;
-  late bool _nudgeEnabled;
-
-  @override
-  void initState() {
-    super.initState();
-    final notif = ref.read(notificationServiceProvider);
-    _reminderEnabled = notif.isReminderEnabled;
-    _reminderHour = notif.reminderHour;
-    _reminderMinute = notif.reminderMinute;
-    _nudgeEnabled = notif.isInactivityNudgeEnabled;
-  }
-
-  Future<void> _pickReminderTime() async {
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: _reminderHour, minute: _reminderMinute),
-    );
-    if (picked != null) {
-      final notif = ref.read(notificationServiceProvider);
-      await notif.setReminderTime(picked.hour, picked.minute);
-      setState(() {
-        _reminderHour = picked.hour;
-        _reminderMinute = picked.minute;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Reminder set for ${picked.format(context)} daily ⏰',
-            ),
-            backgroundColor: AppTheme.primaryGreen,
-          ),
-        );
-      }
-    }
-  }
+  bool _reminderEnabled = true;
+  int _reminderHour = 8;
+  int _reminderMinute = 0;
+  bool _inactivityNudge = true;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final themeMode = ref.watch(themeModeProvider);
-    final notif = ref.watch(notificationServiceProvider);
-    final user = ref.watch(authNotifierProvider).valueOrNull?.user;
-
-    final timeOfDay = TimeOfDay(hour: _reminderHour, minute: _reminderMinute);
-    final formattedTime = timeOfDay.format(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(
+        title: const Text('Settings'),
+        toolbarHeight: 56,
+      ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(AppTheme.space4, AppTheme.space3, AppTheme.space4, AppTheme.space6),
         children: [
-          // ─── Profile ───────────────────────────────────────────────────────
-          const _SectionHeader(label: 'Profile'),
-          _ProfileCard(
-            user: user,
-            onEdit: () {
-              if (user != null) {
-                EditProfileSheet.show(context, user);
-              }
-            },
-          ),
-          const SizedBox(height: 20),
+          // ── Profile Section ────────────────────────────────────────────────
+          _ProfileCard(),
+          const SizedBox(height: AppTheme.space6),
 
-          // ─── Appearance ───────────────────────────────────────────────────
-          const _SectionHeader(label: 'Appearance'),
-          Card(
+          // ── Appearance ─────────────────────────────────────────────────────
+          SectionHeader(title: 'Appearance'),
+          const SizedBox(height: AppTheme.space3),
+          DataCard(
             child: Column(
               children: [
-                _SettingsTile(
-                  icon: Icons.palette_outlined,
-                  iconColor: Colors.deepPurple,
-                  title: 'Theme',
-                  subtitle: _themeName(themeMode),
-                  trailing: _ThemeSegmentedButton(
-                    value: themeMode,
-                    onChanged: (mode) =>
-                        ref.read(themeModeProvider.notifier).setTheme(mode),
-                  ),
+                _ThemeModeTile(
+                  value: ThemeMode.system,
+                  label: 'System',
+                  subtitle: 'Follow device setting',
+                  icon: Icons.brightness_auto_outlined,
+                  selected: themeMode == ThemeMode.system,
+                  onTap: () => ref.read(themeModeProvider.notifier).setTheme(ThemeMode.system),
+                ),
+                Divider(height: 1, color: theme.colorScheme.outlineVariant),
+                _ThemeModeTile(
+                  value: ThemeMode.light,
+                  label: 'Light',
+                  subtitle: 'Always light mode',
+                  icon: Icons.light_mode_outlined,
+                  selected: themeMode == ThemeMode.light,
+                  onTap: () => ref.read(themeModeProvider.notifier).setTheme(ThemeMode.light),
+                ),
+                Divider(height: 1, color: theme.colorScheme.outlineVariant),
+                _ThemeModeTile(
+                  value: ThemeMode.dark,
+                  label: 'Dark',
+                  subtitle: 'Always dark mode',
+                  icon: Icons.dark_mode_outlined,
+                  selected: themeMode == ThemeMode.dark,
+                  onTap: () => ref.read(themeModeProvider.notifier).setTheme(ThemeMode.dark),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppTheme.space6),
 
-          // ─── Notifications & Reminders ──────────────────────────────────
-          const _SectionHeader(label: 'Reminders & Motivation'),
-          Card(
+          // ── Notifications ──────────────────────────────────────────────────
+          SectionHeader(title: 'Notifications'),
+          const SizedBox(height: AppTheme.space3),
+          DataCard(
             child: Column(
               children: [
-                _SettingsTile(
+                _NotificationTile(
                   icon: Icons.notifications_active_outlined,
-                  iconColor: AppTheme.primaryGreen,
-                  title: 'Daily Workout Reminder',
-                  subtitle: _reminderEnabled
-                      ? 'Scheduled for $formattedTime'
-                      : 'Disabled',
+                  title: 'Workout Reminder',
+                  subtitle: 'Daily reminder to workout',
                   trailing: Switch.adaptive(
                     value: _reminderEnabled,
-                    activeTrackColor: AppTheme.primaryGreen,
-                    onChanged: (val) async {
-                      await notif.setReminderEnabled(val);
-                      setState(() => _reminderEnabled = val);
-                    },
+                    onChanged: (v) => setState(() => _reminderEnabled = v),
+                    activeTrackColor: theme.colorScheme.primary,
                   ),
-                  onTap: _reminderEnabled ? _pickReminderTime : null,
+                  onTap: () => _showReminderTimePicker(),
                 ),
-                const Divider(height: 1, indent: 56),
-                _SettingsTile(
-                  icon: Icons.flash_on_rounded,
-                  iconColor: AppTheme.accentOrange,
-                  title: 'Inactivity Smart Nudge',
-                  subtitle: 'Sends a motivational alert if inactive for 3 days',
+                Divider(height: 1, color: theme.colorScheme.outlineVariant),
+                _NotificationTile(
+                  icon: Icons.bedtime_outlined,
+                  title: 'Inactivity Nudge',
+                  subtitle: 'Reminder if no workout logged',
                   trailing: Switch.adaptive(
-                    value: _nudgeEnabled,
-                    activeTrackColor: AppTheme.accentOrange,
-                    onChanged: (val) async {
-                      await notif.setInactivityNudgeEnabled(val);
-                      setState(() => _nudgeEnabled = val);
-                    },
+                    value: _inactivityNudge,
+                    onChanged: (v) => setState(() => _inactivityNudge = v),
+                    activeTrackColor: theme.colorScheme.primary,
                   ),
+                  onTap: () {},
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppTheme.space6),
 
-          // ─── Workout ──────────────────────────────────────────────────────
-          const _SectionHeader(label: 'Workout & Training'),
-          Card(
+          // ── Data Management ────────────────────────────────────────────────
+          SectionHeader(title: 'Data & Privacy'),
+          const SizedBox(height: AppTheme.space3),
+          DataCard(
             child: Column(
               children: [
-                _SettingsTile(
-                  icon: Icons.bookmark_border_rounded,
-                  iconColor: Colors.deepPurple,
-                  title: 'Workout Templates',
-                  subtitle: 'Manage custom & pre-built routines',
-                  trailing: const Icon(Icons.chevron_right_rounded,
-                      color: Colors.grey),
-                  onTap: () => context.pushNamed('workoutTemplates'),
-                ),
-                const Divider(height: 1, indent: 56),
-                _SettingsTile(
-                  icon: Icons.emoji_events_outlined,
-                  iconColor: AppTheme.accentOrange,
-                  title: 'Weekly Challenges',
-                  subtitle: 'View missions & claim XP rewards',
-                  trailing: const Icon(Icons.chevron_right_rounded,
-                      color: Colors.grey),
-                  onTap: () => context.pushNamed('challenges'),
-                ),
-                const Divider(height: 1, indent: 56),
-                _SettingsTile(
-                  icon: Icons.leaderboard_outlined,
-                  iconColor: AppTheme.secondaryBlue,
-                  title: 'Community Leaderboard',
-                  subtitle: 'See top athlete rankings & podium',
-                  trailing: const Icon(Icons.chevron_right_rounded,
-                      color: Colors.grey),
-                  onTap: () => context.pushNamed('leaderboard'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // ─── Data & Reports ───────────────────────────────────────────────
-          const _SectionHeader(label: 'Data & Analytics'),
-          Card(
-            child: Column(
-              children: [
-                _SettingsTile(
-                  icon: Icons.pie_chart_outline_rounded,
-                  iconColor: Colors.deepPurple,
-                  title: 'Weekly & Monthly Reports',
-                  subtitle: 'Comprehensive performance breakdown & PDF',
-                  trailing: const Icon(Icons.chevron_right_rounded,
-                      color: Colors.grey),
-                  onTap: () => context.pushNamed('summaryReport'),
-                ),
-                const Divider(height: 1, indent: 56),
-                _SettingsTile(
-                  icon: Icons.military_tech_outlined,
-                  iconColor: AppTheme.accentOrange,
-                  title: 'Personal Records',
-                  subtitle: 'View all your best lifts',
-                  trailing: const Icon(Icons.chevron_right_rounded,
-                      color: Colors.grey),
-                  onTap: () => context.pushNamed('personalRecords'),
-                ),
-                const Divider(height: 1, indent: 56),
                 _SettingsTile(
                   icon: Icons.download_outlined,
-                  iconColor: AppTheme.primaryGreen,
-                  title: 'Export Workout History',
-                  subtitle: 'Download as CSV format',
-                  trailing: const Icon(Icons.chevron_right_rounded,
-                      color: Colors.grey),
+                  title: 'Export Data',
+                  subtitle: 'CSV export of all workouts',
                   onTap: () => context.pushNamed('export'),
                 ),
+                Divider(height: 1, color: theme.colorScheme.outlineVariant),
+                _SettingsTile(
+                  icon: Icons.delete_outline_rounded,
+                  title: 'Delete All Data',
+                  subtitle: 'Permanently erase all data',
+                  titleColor: theme.colorScheme.error,
+                  onTap: () => _showDeleteConfirmation(),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppTheme.space6),
 
-          // ─── About ────────────────────────────────────────────────────────
-          const _SectionHeader(label: 'About'),
-          Card(
+          // ── About ──────────────────────────────────────────────────────────
+          SectionHeader(title: 'About'),
+          const SizedBox(height: AppTheme.space3),
+          DataCard(
             child: Column(
               children: [
-                ListTile(
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      width: 36,
-                      height: 36,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  title: const Text(AppConstants.appName,
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Version ${AppConstants.appVersion} — AI-powered fitness tracker',
-                      style: TextStyle(fontSize: 12)),
+                _SettingsTile(
+                  icon: Icons.info_outline_rounded,
+                  title: 'Version',
+                  subtitle: '1.0.0',
+                  trailing: const Text('1.0.0', style: TextStyle(fontFamily: 'JetBrainsMono')),
+                  onTap: null,
                 ),
-                const Divider(height: 1, indent: 56),
-                const _SettingsTile(
-                  icon: Icons.code_rounded,
-                  iconColor: Colors.grey,
-                  title: 'Built with Flutter & Riverpod',
-                  subtitle: 'Clean feature-first architecture',
+                Divider(height: 1, color: theme.colorScheme.outlineVariant),
+                _SettingsTile(
+                  icon: Icons.article_outlined,
+                  title: 'Terms of Service',
+                  subtitle: 'Read our terms',
+                  onTap: () {},
+                ),
+                Divider(height: 1, color: theme.colorScheme.outlineVariant),
+                _SettingsTile(
+                  icon: Icons.privacy_tip_outlined,
+                  title: 'Privacy Policy',
+                  subtitle: 'How we handle your data',
+                  onTap: () {},
+                ),
+                Divider(height: 1, color: theme.colorScheme.outlineVariant),
+                _SettingsTile(
+                  icon: Icons.bug_report_outlined,
+                  title: 'Report a Bug',
+                  subtitle: 'Help us improve ArcFit',
+                  onTap: () {},
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 32),
-
-          // ─── Sign out ─────────────────────────────────────────────────────
-          OutlinedButton.icon(
-            onPressed: () => _confirmSignOut(context, ref),
-            icon: const Icon(Icons.logout_rounded),
-            label: const Text('Sign Out'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.errorRed,
-              side: const BorderSide(color: AppTheme.errorRed),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-          ),
-          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  String _themeName(ThemeMode mode) {
-    return switch (mode) {
-      ThemeMode.light => 'Light',
-      ThemeMode.dark => 'Dark',
-      ThemeMode.system => 'System',
-    };
+  Future<void> _showReminderTimePicker() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: _reminderHour, minute: _reminderMinute),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          timePickerTheme: TimePickerThemeData(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            hourMinuteTextColor: Theme.of(context).colorScheme.onSurface,
+            dayPeriodTextColor: Theme.of(context).colorScheme.onSurface,
+            dialHandColor: Theme.of(context).colorScheme.primary,
+            dialBackgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _reminderHour = picked.hour;
+        _reminderMinute = picked.minute;
+      });
+    }
   }
 
-  void _confirmSignOut(BuildContext context, WidgetRef ref) {
+  void _showDeleteConfirmation() {
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text('You can sign back in any time.'),
+      builder: (context) => AlertDialog(
+        title: const Text('Delete All Data?'),
+        content: const Text('This will permanently delete all your workouts, nutrition logs, progress data, and settings. This action cannot be undone.'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
+            onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
-              Navigator.of(ctx).pop();
-              ref.read(authNotifierProvider.notifier).signOut();
+              Navigator.pop(context);
+              // In real app: ref.read(dataRepositoryProvider).deleteAll();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('All data deleted')),
+              );
             },
-            style: TextButton.styleFrom(foregroundColor: AppTheme.errorRed),
-            child: const Text('Sign Out'),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            child: const Text('Delete Everything'),
           ),
         ],
       ),
@@ -307,320 +234,449 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sub-widgets
-// ─────────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════════════
+// PROFILE CARD
+// ══════════════════════════════════════════════════════════════════════════════════════
 
-class _SectionHeader extends StatelessWidget {
+class _ProfileCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final user = ref.watch(authNotifierProvider).valueOrNull?.user;
+    final userName = user?.name.isNotEmpty == true ? user!.name : 'Alex Rivera';
+    final userEmail = user?.email.isNotEmpty == true ? user!.email : 'alex@arcfit.app';
+    final userAge = user?.age ?? 26;
+    final userHeight = user?.height?.round() ?? 178;
+    final userWeight = user?.weight?.round() ?? 75;
+    final userAvatar = (user?.avatarEmoji?.isNotEmpty == true) ? user!.avatarEmoji! : '🦁';
+
+    return DataCard(
+      child: Row(
+        children: [
+          Avatar(
+            emoji: userAvatar,
+            size: 64,
+            borderColor: theme.colorScheme.primary,
+            borderWidth: 2,
+          ),
+          const SizedBox(width: AppTheme.space4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  userName,
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  userEmail,
+                  style: GoogleFonts.ibmPlexSans(
+                    fontSize: 13,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppTheme.space3),
+                Row(
+                  children: [
+                    _ProfileStat(label: 'Age', value: '$userAge yrs', color: theme.colorScheme.primary),
+                    const SizedBox(width: AppTheme.space3),
+                    _ProfileStat(label: 'Height', value: '$userHeight cm', color: theme.colorScheme.secondary),
+                    const SizedBox(width: AppTheme.space3),
+                    _ProfileStat(label: 'Weight', value: '$userWeight kg', color: theme.colorScheme.tertiary),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppTheme.space3),
+          IconButton(
+            icon: Icon(Icons.edit_outlined, size: 22, color: theme.colorScheme.onSurfaceVariant),
+            onPressed: () => _showEditProfileSheet(context, user),
+            tooltip: 'Edit Profile',
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditProfileSheet(BuildContext context, UserEntity? user) {
+    if (user != null) {
+      EditProfileSheet.show(context, user);
+    } else {
+      showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => const _EditProfileSheet(),
+      );
+    }
+  }
+}
+
+class _ProfileStat extends StatelessWidget {
   final String label;
-  const _SectionHeader({required this.label});
+  final String value;
+  final Color color;
+
+  const _ProfileStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
-      child: Text(
-        label.toUpperCase(),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.0,
-          color: Colors.grey.shade600,
+    final theme = Theme.of(context);
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppTheme.space2),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: GoogleFonts.ibmPlexSans(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════════════
+// SETTINGS TILES
+// ═════════════════════════════════════════════════════════════════════════════════════
+
+class _ThemeModeTile extends StatelessWidget {
+  final ThemeMode value;
+  final String label;
+  final String subtitle;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _ThemeModeTile({
+    required this.value,
+    required this.label,
+    required this.subtitle,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? theme.colorScheme.primaryContainer : theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        ),
+        child: Icon(icon, size: 20, color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant),
+      ),
+      title: Text(label, style: GoogleFonts.ibmPlexSans(fontWeight: FontWeight.w500)),
+      subtitle: Text(subtitle, style: GoogleFonts.ibmPlexSans(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
+      trailing: selected
+          ? Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary, size: 22)
+          : null,
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppTheme.space2),
+    );
+  }
+}
+
+class _NotificationTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Widget trailing;
+  final VoidCallback? onTap;
+
+  const _NotificationTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      leading: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        ),
+        child: Icon(icon, size: 20, color: theme.colorScheme.primary),
+      ),
+      title: Text(title, style: GoogleFonts.ibmPlexSans(fontWeight: FontWeight.w500)),
+      subtitle: Text(subtitle, style: GoogleFonts.ibmPlexSans(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
+      trailing: trailing,
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppTheme.space2),
     );
   }
 }
 
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
   final String title;
   final String subtitle;
   final Widget? trailing;
+  final Color? titleColor;
   final VoidCallback? onTap;
 
   const _SettingsTile({
     required this.icon,
-    required this.iconColor,
     required this.title,
     required this.subtitle,
     this.trailing,
+    this.titleColor,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ListTile(
       leading: Container(
-        width: 36,
-        height: 36,
+        width: 40,
+        height: 40,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(10),
+          color: theme.colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         ),
-        child: Icon(icon, size: 18, color: iconColor),
+        child: Icon(icon, size: 20, color: theme.colorScheme.primary),
       ),
-      title: Text(title,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+      title: Text(title, style: GoogleFonts.ibmPlexSans(fontWeight: FontWeight.w500, color: titleColor)),
+      subtitle: Text(subtitle, style: GoogleFonts.ibmPlexSans(fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
       trailing: trailing,
       onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: AppTheme.space2),
     );
   }
 }
 
-class _ThemeSegmentedButton extends StatelessWidget {
-  final ThemeMode value;
-  final ValueChanged<ThemeMode> onChanged;
+// ══════════════════════════════════════════════════════════════════════════════════════
+// EDIT PROFILE SHEET
+// ══════════════════════════════════════════════════════════════════════════════════════
 
-  const _ThemeSegmentedButton({
-    required this.value,
-    required this.onChanged,
-  });
+class _EditProfileSheet extends ConsumerStatefulWidget {
+  const _EditProfileSheet();
 
   @override
-  Widget build(BuildContext context) {
-    return SegmentedButton<ThemeMode>(
-      segments: const [
-        ButtonSegment(
-          value: ThemeMode.light,
-          icon: Icon(Icons.light_mode_outlined, size: 16),
-        ),
-        ButtonSegment(
-          value: ThemeMode.system,
-          icon: Icon(Icons.phone_android_rounded, size: 16),
-        ),
-        ButtonSegment(
-          value: ThemeMode.dark,
-          icon: Icon(Icons.dark_mode_outlined, size: 16),
-        ),
-      ],
-      selected: {value},
-      onSelectionChanged: (set) => onChanged(set.first),
-      style: const ButtonStyle(
-        visualDensity: VisualDensity.compact,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-    );
-  }
+  ConsumerState<_EditProfileSheet> createState() => _EditProfileSheetState();
 }
 
-class _ProfileCard extends StatelessWidget {
-  final UserEntity? user;
-  final VoidCallback onEdit;
+class _EditProfileSheetState extends ConsumerState<_EditProfileSheet> {
+  final _nameController = TextEditingController(text: 'Alex Rivera');
+  final _ageController = TextEditingController(text: '26');
+  final _heightController = TextEditingController(text: '178');
+  final _weightController = TextEditingController(text: '75');
+  String _selectedAvatar = '🦁';
+  bool _isSaving = false;
 
-  const _ProfileCard({
-    required this.user,
-    required this.onEdit,
-  });
+  final List<String> _avatars = [
+    '🦁', '🐯', '🐻', '🐺', '🦅', '🦈', '🦍', '🐂',
+    '🐎', '🐅', '🐘', '🦏', '🐊', '🦂', '🦁', '🐉',
+  ];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _ageController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    setState(() => _isSaving = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
-    final avatarEmoji = user?.avatarEmoji ?? '⚡';
-    final name =
-        (user != null && user!.name.isNotEmpty) ? user!.name : 'Athlete';
-    final email = user?.email ?? '';
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.85,
+      minChildSize: 0.6,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXl)),
+        ),
+        child: Column(
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: AppTheme.space3),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
 
-    final hasStats = user != null &&
-        (user!.age != null ||
-            user!.gender != null ||
-            user!.height != null ||
-            user!.weight != null);
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onEdit,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppTheme.space4, AppTheme.space3, AppTheme.space4, AppTheme.space2),
+              child: Row(
                 children: [
-                  // Emoji Avatar with glow and edit badge
-                  Stack(
-                    children: [
-                      Container(
-                        width: 58,
-                        height: 58,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppTheme.primaryGreen.withValues(alpha: 0.15),
-                          border: Border.all(
-                            color: AppTheme.primaryGreen.withValues(alpha: 0.6),
-                            width: 2,
-                          ),
+                  Text('Edit Profile', style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w500)),
+                  const Spacer(),
+                  IconButton(icon: Icon(Icons.close_rounded, size: 22, color: theme.colorScheme.onSurfaceVariant), onPressed: () => Navigator.pop(context)),
+                ],
+              ),
+            ),
+
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: AppTheme.space4),
+                children: [
+                  // Avatar picker
+                  Center(
+                    child: Column(
+                      children: [
+                        Text('Choose Avatar', style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w500)),
+                        const SizedBox(height: AppTheme.space3),
+                        Wrap(
+                          spacing: AppTheme.space2,
+                          runSpacing: AppTheme.space2,
+                          children: _avatars.map((avatar) => GestureDetector(
+                            onTap: () => setState(() => _selectedAvatar = avatar),
+                            child: Container(
+                              width: 56,
+                              height: 56,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: _selectedAvatar == avatar
+                                    ? theme.colorScheme.primaryContainer
+                                    : theme.colorScheme.surfaceContainer,
+                                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                                border: Border.all(
+                                  color: _selectedAvatar == avatar
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.outlineVariant,
+                                  width: _selectedAvatar == avatar ? 2 : 1,
+                                ),
+                              ),
+                              child: Text(avatar, style: TextStyle(fontSize: 24)),
+                            ),
+                          )).toList(),
                         ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          avatarEmoji,
-                          style: const TextStyle(fontSize: 28),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.space5),
+
+                  // Form fields
+                  TextField(
+                    controller: _nameController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: InputDecoration(
+                      labelText: 'Full Name',
+                      prefixIcon: Icon(Icons.person_outlined, color: theme.colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.space3),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _ageController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Age',
+                            prefixIcon: Icon(Icons.cake_outlined, color: theme.colorScheme.onSurfaceVariant),
+                          ),
                         ),
                       ),
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryGreen,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isDark
-                                  ? const Color(0xFF1E1E1E)
-                                  : Colors.white,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.edit,
-                            size: 10,
-                            color: Colors.white,
+                      const SizedBox(width: AppTheme.space3),
+                      Expanded(
+                        child: TextField(
+                          controller: _heightController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Height (cm)',
+                            prefixIcon: Icon(Icons.height_outlined, color: theme.colorScheme.onSurfaceVariant),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(width: 14),
-                  // Name and Email
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        if (email.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            email,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ],
+                  const SizedBox(height: AppTheme.space3),
+                  TextField(
+                    controller: _weightController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Weight (kg)',
+                      prefixIcon: Icon(Icons.monitor_weight_outlined, color: theme.colorScheme.onSurfaceVariant),
                     ),
                   ),
-                  // Edit Action Button
-                  IconButton.filledTonal(
-                    onPressed: onEdit,
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    tooltip: 'Edit Profile',
-                    style: IconButton.styleFrom(
-                      backgroundColor:
-                          AppTheme.primaryGreen.withValues(alpha: 0.12),
-                      foregroundColor: AppTheme.primaryGreen,
-                      visualDensity: VisualDensity.compact,
+                  const SizedBox(height: AppTheme.space5),
+
+                  // Save button
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _isSaving ? null : _save,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 52),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
+                      ),
+                      child: Text(_isSaving ? 'Saving...' : 'Save Changes'),
                     ),
                   ),
+                  const SizedBox(height: AppTheme.space4),
                 ],
               ),
-              const SizedBox(height: 14),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              // Profile Stats summary row
-              if (hasStats)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    if (user!.age != null)
-                      _StatChip(
-                        icon: Icons.cake_outlined,
-                        label: '${user!.age} yrs',
-                      ),
-                    if (user!.gender != null && user!.gender!.isNotEmpty)
-                      _StatChip(
-                        icon: Icons.wc_rounded,
-                        label: user!.gender!,
-                      ),
-                    if (user!.height != null)
-                      _StatChip(
-                        icon: Icons.height_rounded,
-                        label:
-                            '${user!.height!.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '')} cm',
-                      ),
-                    if (user!.weight != null)
-                      _StatChip(
-                        icon: Icons.fitness_center_rounded,
-                        label:
-                            '${user!.weight!.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '')} kg',
-                      ),
-                  ],
-                )
-              else
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.add_circle_outline_rounded,
-                      size: 16,
-                      color: AppTheme.primaryGreen,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Tap to set age, gender, height & weight',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.primaryGreen,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _StatChip({
-    required this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: Colors.grey.shade500),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

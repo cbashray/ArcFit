@@ -59,7 +59,7 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
 
   /// One-tap demo account: creates it on first use, then signs in.
   Future<String?> demoSignIn() async {
-    const email = 'demo@fitx.app';
+    const email = 'demo@arcfit.app';
     const password = 'demo1234';
     final repo = ref.read(authRepositoryProvider);
 

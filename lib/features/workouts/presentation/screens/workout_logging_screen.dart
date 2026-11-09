@@ -1,16 +1,20 @@
 import 'dart:async';
-
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ActionChip, Badge;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/theme/app_theme.dart';
-import '../../../exercise_library/presentation/providers/exercise_providers.dart';
-import '../providers/workout_providers.dart';
-import '../../widgets/rest_timer_widget.dart';
-import '../../widgets/one_rm_calculator_widget.dart';
-import '../../widgets/exercise_substitution_sheet.dart';
-import '../../widgets/ai_workout_review_sheet.dart';
+import '../../../../core/theme/app_theme.dart' show AppTheme;
+import '../../../../features/shared/presentation/widgets/ui_components_export.dart';
+import '../../domain/entities/workout_template_entity.dart'
+    show WorkoutTemplateEntity;
+import '../../widgets/ai_workout_review_sheet.dart'
+    show showAiWorkoutReviewModal;
+import '../../widgets/rest_timer_widget.dart' show showRestTimer;
+import '../providers/workout_providers.dart'
+    show activeWorkoutProvider, ActiveWorkout, DraftExercise;
+import '../providers/workout_template_providers.dart'
+    show workoutTemplatesProvider;
 
 class WorkoutLoggingScreen extends ConsumerStatefulWidget {
   const WorkoutLoggingScreen({super.key});
@@ -21,136 +25,177 @@ class WorkoutLoggingScreen extends ConsumerStatefulWidget {
 }
 
 class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
-  final _titleController = TextEditingController();
-  Timer? _ticker;
-  DateTime? _startedAt;
-
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (ref.read(activeWorkoutProvider) == null) {
-        ref.read(activeWorkoutProvider.notifier).start();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkAutoStart());
+  }
+
+  void _checkAutoStart() {
+    if (!mounted) return;
+    final active = ref.read(activeWorkoutProvider);
+    if (active != null) return;
+
+    // Check query params to auto-populate if launched via template link
+    Uri? uri;
+    try {
+      uri = GoRouterState.of(context).uri;
+    } catch (_) {}
+    final templateParam = uri?.queryParameters['template']?.toLowerCase();
+    if (templateParam == null || templateParam.isEmpty) return;
+
+    final templates = ref.read(workoutTemplatesProvider).valueOrNull ?? [];
+    final match = templates.cast<WorkoutTemplateEntity?>().firstWhere(
+          (t) =>
+              t != null &&
+              (t.name.toLowerCase().contains(templateParam) ||
+                  t.title.toLowerCase().contains(templateParam)),
+          orElse: () => null,
+        );
+
+    final notifier = ref.read(activeWorkoutProvider.notifier);
+    if (match != null) {
+      notifier.start(title: match.title);
+      for (final ex in match.exercises) {
+        notifier.addDraftExercise(
+          DraftExercise(
+            exerciseId: ex.exerciseId,
+            name: ex.exerciseName,
+            muscleGroup: ex.muscleGroup,
+            sets: ex.defaultSets,
+            reps: ex.defaultReps,
+            weight: ex.targetWeight ?? 0.0,
+          ),
+        );
       }
-      _syncTicker();
-    });
-  }
-
-  void _syncTicker() {
-    final active = ref.read(activeWorkoutProvider);
-    if (active == null) {
-      _ticker?.cancel();
-      _ticker = null;
-      _startedAt = null;
-      return;
+    } else {
+      final title =
+          '${templateParam[0].toUpperCase()}${templateParam.substring(1)} Workout';
+      notifier.start(title: title);
+      if (templateParam.contains('push')) {
+        notifier.addDraftExercise(DraftExercise(
+            exerciseId: 'bench',
+            name: 'Barbell Bench Press',
+            muscleGroup: 'Chest',
+            sets: 4,
+            reps: 8,
+            weight: 60));
+        notifier.addDraftExercise(DraftExercise(
+            exerciseId: 'ohp',
+            name: 'Overhead Press',
+            muscleGroup: 'Shoulders',
+            sets: 3,
+            reps: 10,
+            weight: 40));
+        notifier.addDraftExercise(DraftExercise(
+            exerciseId: 'tri',
+            name: 'Tricep Pushdown',
+            muscleGroup: 'Arms',
+            sets: 3,
+            reps: 12,
+            weight: 25));
+      } else if (templateParam.contains('pull')) {
+        notifier.addDraftExercise(DraftExercise(
+            exerciseId: 'row',
+            name: 'Bent-Over Row',
+            muscleGroup: 'Back',
+            sets: 4,
+            reps: 8,
+            weight: 50));
+        notifier.addDraftExercise(DraftExercise(
+            exerciseId: 'lat',
+            name: 'Lat Pulldown',
+            muscleGroup: 'Back',
+            sets: 3,
+            reps: 10,
+            weight: 45));
+        notifier.addDraftExercise(DraftExercise(
+            exerciseId: 'curl',
+            name: 'Bicep Curl',
+            muscleGroup: 'Arms',
+            sets: 3,
+            reps: 12,
+            weight: 14));
+      } else if (templateParam.contains('leg')) {
+        notifier.addDraftExercise(DraftExercise(
+            exerciseId: 'squat',
+            name: 'Barbell Squat',
+            muscleGroup: 'Legs',
+            sets: 4,
+            reps: 8,
+            weight: 80));
+        notifier.addDraftExercise(DraftExercise(
+            exerciseId: 'rdl',
+            name: 'Romanian Deadlift',
+            muscleGroup: 'Hamstrings',
+            sets: 3,
+            reps: 10,
+            weight: 70));
+        notifier.addDraftExercise(DraftExercise(
+            exerciseId: 'calf',
+            name: 'Calf Raise',
+            muscleGroup: 'Calves',
+            sets: 4,
+            reps: 15,
+            weight: 40));
+      } else {
+        notifier.addDraftExercise(DraftExercise(
+            exerciseId: 'ex_1',
+            name: 'Bench Press',
+            muscleGroup: 'Chest',
+            sets: 3,
+            reps: 10,
+            weight: 50));
+      }
     }
-    if (_startedAt != active.startedAt) {
-      _startedAt = active.startedAt;
-      _titleController.text = active.title;
-      _ticker?.cancel();
-      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (mounted) setState(() {});
-      });
-    }
   }
 
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    _titleController.dispose();
-    super.dispose();
-  }
+  Future<void> _completeWorkout() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final nav = GoRouter.of(context);
+    final result = await ref.read(activeWorkoutProvider.notifier).finish();
+    if (!mounted) return;
 
-  String _elapsedLabel() {
-    final startedAt = _startedAt;
-    if (startedAt == null) return '00:00';
-    final elapsed = DateTime.now().difference(startedAt);
-    final h = elapsed.inHours;
-    final m = elapsed.inMinutes % 60;
-    final s = elapsed.inSeconds % 60;
-    if (h > 0) {
-      return '${h}h ${m.toString().padLeft(2, '0')}m';
-    }
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-  }
-
-  bool _isFinishing = false;
-
-  Future<void> _finishWorkout() async {
-    final active = ref.read(activeWorkoutProvider);
-    if (active == null || _isFinishing) return;
-
-    if (active.exercises.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Add at least one exercise before finishing.'),
-          backgroundColor: AppTheme.accentOrange,
+    if (result.workout != null) {
+      await showAiWorkoutReviewModal(
+        context,
+        result.workout!,
+        onDismissed: () => nav.go('/workouts'),
+      );
+    } else {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            result.newPRs.isNotEmpty
+                ? 'Workout completed! New PRs: ${result.newPRs.join(", ")} 🎉'
+                : 'Workout completed and saved! 💪',
+          ),
+          behavior: SnackBarBehavior.floating,
         ),
       );
-      return;
-    }
-
-    setState(() => _isFinishing = true);
-
-    try {
-      final result = await ref.read(activeWorkoutProvider.notifier).finish();
-      if (!mounted) return;
-
-      if (result.workout != null) {
-        // Show AI Workout Review modal
-        showAiWorkoutReviewModal(
-          context,
-          result.workout!,
-          newPRs: result.newPRs,
-          onDismissed: () {
-            if (mounted) context.goNamed('home');
-          },
-        );
-      } else {
-        context.goNamed('home');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving workout: $e'),
-            backgroundColor: AppTheme.errorRed,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isFinishing = false);
+      nav.go('/workouts');
     }
   }
 
-  void _discardWorkout() {
-    final active = ref.read(activeWorkoutProvider);
-    final hasContent =
-        active != null && (active.exercises.isNotEmpty || active.title.isNotEmpty);
-
-    if (!hasContent) {
-      ref.read(activeWorkoutProvider.notifier).discard();
-      context.goNamed('home');
-      return;
-    }
-
+  void _confirmDiscard() {
     showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Discard workout?'),
-        content: const Text('Your current workout will not be saved.'),
+      builder: (ctx) => AlertDialog(
+        title: Text('Discard Workout?',
+            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        content: const Text('All unlogged exercises and sets will be lost.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Keep logging'),
-          ),
-          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Keep Logging')),
+          FilledButton(
+            style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error),
             onPressed: () {
               ref.read(activeWorkoutProvider.notifier).discard();
-              Navigator.of(context).pop();
-              context.goNamed('home');
+              Navigator.pop(ctx);
+              context.go('/workouts');
             },
-            style: TextButton.styleFrom(foregroundColor: AppTheme.errorRed),
             child: const Text('Discard'),
           ),
         ],
@@ -158,715 +203,483 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     );
   }
 
-  void _openExercisePicker() {
-    showModalBottomSheet<void>(
+  void _showAddExerciseDialog() {
+    final nameCtrl = TextEditingController();
+    final muscleCtrl = TextEditingController(text: 'Chest');
+    final setsCtrl = TextEditingController(text: '3');
+    final repsCtrl = TextEditingController(text: '10');
+    final weightCtrl = TextEditingController(text: '20');
+
+    showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) => const _ExercisePickerSheet(),
+      builder: (ctx) => AlertDialog(
+        title: Text('Add Exercise',
+            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Exercise Name',
+                  hintText: 'e.g. Incline Dumbbell Press',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: muscleCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Muscle Group',
+                  hintText: 'e.g. Chest, Back, Legs',
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: setsCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Sets'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: repsCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: 'Reps'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: weightCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      decoration:
+                          const InputDecoration(labelText: 'Weight (kg)'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final name = nameCtrl.text.trim();
+              if (name.isEmpty) return;
+              final sets = int.tryParse(setsCtrl.text) ?? 3;
+              final reps = int.tryParse(repsCtrl.text) ?? 10;
+              final weight = double.tryParse(weightCtrl.text) ?? 0.0;
+              ref.read(activeWorkoutProvider.notifier).addDraftExercise(
+                    DraftExercise(
+                      exerciseId: 'ex_${DateTime.now().millisecondsSinceEpoch}',
+                      name: name,
+                      muscleGroup: muscleCtrl.text.trim().isNotEmpty
+                          ? muscleCtrl.text.trim()
+                          : 'General',
+                      sets: sets > 0 ? sets : 1,
+                      reps: reps > 0 ? reps : 1,
+                      weight: weight >= 0 ? weight : 0,
+                    ),
+                  );
+              Navigator.pop(ctx);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    _syncTicker();
-    final active = ref.watch(activeWorkoutProvider);
-    final theme = Theme.of(context);
+    final activeWorkout = ref.watch(activeWorkoutProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Log Workout'),
         actions: [
-          if (active != null) ...[
-            // Elapsed time
-            Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: Row(
-                children: [
-                  const Icon(Icons.timer_outlined,
-                      size: 18, color: AppTheme.primaryGreen),
-                  const SizedBox(width: 4),
-                  Text(
-                    _elapsedLabel(),
-                    style: const TextStyle(
-                      fontFeatures: [FontFeature.tabularFigures()],
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Rest Timer button
+          if (activeWorkout != null) ...[
             IconButton(
-              icon: const Icon(Icons.hourglass_top_rounded),
-              tooltip: 'Rest Timer',
-              onPressed: () => showRestTimer(context),
+              icon: Icon(Icons.delete_outline_rounded,
+                  color: Theme.of(context).colorScheme.error),
+              onPressed: _confirmDiscard,
+              tooltip: 'Discard Workout',
+            ),
+            IconButton(
+              icon: const Icon(Icons.check_rounded),
+              onPressed: _completeWorkout,
+              tooltip: 'Complete Workout',
             ),
           ],
         ],
       ),
-      body: active == null
-          ? const Center(child: Text('No active workout'))
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.all(16),
-                    children: [
-                      // Workout title
-                      TextField(
-                        controller: _titleController,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: const InputDecoration(
-                          labelText: 'Workout title',
-                          hintText: 'e.g. Push Day, Leg Day...',
-                          prefixIcon: Icon(Icons.edit_outlined),
-                        ),
-                        onChanged: (value) => ref
-                            .read(activeWorkoutProvider.notifier)
-                            .setTitle(value),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Exercise list header
-                      Row(
-                        children: [
-                          const Text(
-                            'Exercises',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryGreen
-                                  .withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '${active.exercises.length}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.primaryGreen,
-                              ),
-                            ),
-                          ),
-                          const Spacer(),
-                          // Working set / warm-up count
-                          if (active.exercises.isNotEmpty)
-                            Text(
-                              '${active.exercises.where((e) => !e.isWarmup).length} working · '
-                              '${active.exercises.where((e) => e.isWarmup).length} warmup',
-                              style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade500),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      if (active.exercises.isEmpty)
-                        _buildEmptyState(theme)
-                      else
-                        ...List.generate(active.exercises.length, (index) {
-                          final draft = active.exercises[index];
-                          return _DraftExerciseCard(
-                            index: index,
-                            draft: draft,
-                            onChanged: (updated) => ref
-                                .read(activeWorkoutProvider.notifier)
-                                .updateExercise(index, updated),
-                            onRemoved: () => ref
-                                .read(activeWorkoutProvider.notifier)
-                                .removeExercise(index),
-                            onShowOneRm: () => showOneRmCalculator(
-                              context,
-                              initialWeight: draft.weight,
-                              initialReps: draft.reps,
-                              exerciseName: draft.name,
-                            ),
-                          );
-                        }),
-                      const SizedBox(height: 12),
-
-                      // Add exercise button
-                      OutlinedButton.icon(
-                        onPressed: _openExercisePicker,
-                        icon: const Icon(Icons.add),
-                        label: const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 10),
-                          child: Text('Add Exercise'),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppTheme.primaryGreen,
-                          side: BorderSide(
-                            color: AppTheme.primaryGreen
-                                .withValues(alpha: 0.5),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Bottom action bar
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.scaffoldBackgroundColor,
-                    border: Border(
-                      top: BorderSide(color: Colors.grey.shade200),
-                    ),
-                  ),
-                  child: SafeArea(
-                    top: false,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _discardWorkout,
-                            child: const Text('Cancel'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton.icon(
-                            onPressed: _isFinishing ? null : _finishWorkout,
-                            icon: _isFinishing
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Icon(Icons.check_rounded),
-                            label: Text(_isFinishing
-                                ? 'Saving...'
-                                : 'Finish Workout'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      body: activeWorkout == null
+          ? EmptyState(
+              icon: Icons.fitness_center_rounded,
+              title: 'No Active Workout',
+              message:
+                  'Start a workout from the Workouts tab to begin logging.',
+              actionLabel: 'Browse Workouts',
+              onAction: () => context.go('/workouts'),
+            )
+          : _buildWorkoutContent(activeWorkout),
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.fitness_center,
-              size: 40, color: Colors.grey.shade300),
-          const SizedBox(height: 8),
-          Text(
-            'No exercises yet',
-            style: TextStyle(color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Tap "Add Exercise" to get started',
-            style:
-                TextStyle(fontSize: 12, color: Colors.grey.shade500),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Draft exercise card
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _DraftExerciseCard extends StatelessWidget {
-  final int index;
-  final DraftExercise draft;
-  final ValueChanged<DraftExercise> onChanged;
-  final VoidCallback onRemoved;
-  final VoidCallback onShowOneRm;
-
-  const _DraftExerciseCard({
-    required this.index,
-    required this.draft,
-    required this.onChanged,
-    required this.onRemoved,
-    required this.onShowOneRm,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildWorkoutContent(ActiveWorkout workout) {
     final theme = Theme.of(context);
-    final isWarmup = draft.isWarmup;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: theme.cardTheme.color,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isWarmup
-              ? AppTheme.accentOrange.withValues(alpha: 0.4)
-              : Colors.grey.shade200,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return ListView(
+      padding: const EdgeInsets.all(AppTheme.space4),
+      children: [
+        DataCard(
+          padding: const EdgeInsets.all(AppTheme.space4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: isWarmup
-                      ? AppTheme.accentOrange.withValues(alpha: 0.15)
-                      : AppTheme.primaryGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${index + 1}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: isWarmup
-                        ? AppTheme.accentOrange
-                        : AppTheme.primaryGreen,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          draft.name,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        if (isWarmup) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: AppTheme.accentOrange
-                                  .withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Text(
-                              'WARM-UP',
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                                color: AppTheme.accentOrange,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    Text(
-                      draft.muscleGroup,
-                      style: TextStyle(
-                          fontSize: 11, color: Colors.grey.shade600),
-                    ),
-                  ],
-                ),
-              ),
-              // Warm-up toggle + overflow menu
-              PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert,
-                    size: 18, color: Colors.grey.shade500),
-                onSelected: (value) {
-                  if (value == 'warmup') {
-                    onChanged(DraftExercise(
-                      exerciseId: draft.exerciseId,
-                      name: draft.name,
-                      muscleGroup: draft.muscleGroup,
-                      sets: draft.sets,
-                      reps: draft.reps,
-                      weight: draft.weight,
-                      isWarmup: !draft.isWarmup,
-                    ));
-                  } else if (value == 'substitute') {
-                    showExerciseSubstitutionModal(
-                      context: context,
-                      exerciseName: draft.name,
-                      muscleGroup: draft.muscleGroup,
-                      exerciseIndex: index,
-                    );
-                  } else if (value == 'one_rm') {
-                    onShowOneRm();
-                  } else if (value == 'remove') {
-                    onRemoved();
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'substitute',
-                    child: Row(
-                      children: [
-                        Icon(Icons.auto_awesome_rounded,
-                            size: 16, color: Colors.deepPurple),
-                        SizedBox(width: 8),
-                        Text('Substitute (AI)'),
-                      ],
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      workout.title.isNotEmpty
+                          ? workout.title
+                          : 'Custom Workout',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
                   ),
-                  PopupMenuItem(
-                    value: 'warmup',
-                    child: Row(
-                      children: [
-                        Icon(
-                          isWarmup
-                              ? Icons.fitness_center_rounded
-                              : Icons.local_fire_department_outlined,
-                          size: 16,
-                          color: AppTheme.accentOrange,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(isWarmup
-                            ? 'Mark as working set'
-                            : 'Mark as warm-up'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'one_rm',
-                    child: Row(
-                      children: [
-                        Icon(Icons.calculate_outlined,
-                            size: 16, color: AppTheme.secondaryBlue),
-                        SizedBox(width: 8),
-                        Text('Calculate 1RM'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuDivider(),
-                  const PopupMenuItem(
-                    value: 'remove',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete_outline,
-                            size: 16, color: AppTheme.errorRed),
-                        SizedBox(width: 8),
-                        Text('Remove',
-                            style: TextStyle(color: AppTheme.errorRed)),
-                      ],
+                  OutlinedButton.icon(
+                    onPressed: _showAddExerciseDialog,
+                    icon: const Icon(Icons.add_rounded, size: 16),
+                    label: const Text('Add Exercise'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 34),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _StepperField(
-                  label: 'Sets',
-                  value: draft.sets,
-                  min: 1,
-                  max: 12,
-                  onChanged: (value) => onChanged(DraftExercise(
-                    exerciseId: draft.exerciseId,
-                    name: draft.name,
-                    muscleGroup: draft.muscleGroup,
-                    sets: value,
-                    reps: draft.reps,
-                    weight: draft.weight,
-                    isWarmup: draft.isWarmup,
-                  )),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StepperField(
-                  label: 'Reps',
-                  value: draft.reps,
-                  min: 1,
-                  max: 50,
-                  onChanged: (value) => onChanged(DraftExercise(
-                    exerciseId: draft.exerciseId,
-                    name: draft.name,
-                    muscleGroup: draft.muscleGroup,
-                    sets: draft.sets,
-                    reps: value,
-                    weight: draft.weight,
-                    isWarmup: draft.isWarmup,
-                  )),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StepperField(
-                  label: 'kg',
-                  value: draft.weight.round(),
-                  min: 0,
-                  max: 500,
-                  step: 5,
-                  onChanged: (value) => onChanged(DraftExercise(
-                    exerciseId: draft.exerciseId,
-                    name: draft.name,
-                    muscleGroup: draft.muscleGroup,
-                    sets: draft.sets,
-                    reps: draft.reps,
-                    weight: value.toDouble(),
-                    isWarmup: draft.isWarmup,
-                  )),
-                ),
+              const SizedBox(height: AppTheme.space2),
+              Row(
+                children: [
+                  Icon(Icons.fitness_center_outlined,
+                      size: 16, color: theme.colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${workout.exercises.length} exercises',
+                    style: GoogleFonts.ibmPlexSans(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(width: AppTheme.space4),
+                  Icon(Icons.timer_outlined,
+                      size: 16, color: theme.colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 4),
+                  _ElapsedTimer(startedAt: workout.startedAt),
+                ],
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Stepper field
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _StepperField extends StatelessWidget {
-  final String label;
-  final int value;
-  final int min;
-  final int max;
-  final int step;
-  final ValueChanged<int> onChanged;
-
-  const _StepperField({
-    required this.label,
-    required this.value,
-    required this.min,
-    required this.max,
-    this.step = 1,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface == Colors.white
-            ? const Color(0xFFF7F8FA)
-            : theme.colorScheme.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _StepButton(
-                icon: Icons.remove,
-                enabled: value > min,
-                onTap: () => onChanged((value - step).clamp(min, max)),
-              ),
-              Text(
-                '$value',
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              _StepButton(
-                icon: Icons.add,
-                enabled: value < max,
-                onTap: () => onChanged((value + step).clamp(min, max)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StepButton extends StatelessWidget {
-  final IconData icon;
-  final bool enabled;
-  final VoidCallback onTap;
-
-  const _StepButton({
-    required this.icon,
-    required this.enabled,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.all(6),
-        child: Icon(
-          icon,
-          size: 16,
-          color: enabled ? AppTheme.primaryGreen : Colors.grey.shade300,
         ),
-      ),
+        const SizedBox(height: AppTheme.space4),
+        for (var i = 0; i < workout.exercises.length; i++)
+          _ExerciseCard(
+            index: i,
+            exercise: workout.exercises[i],
+          ),
+        const SizedBox(height: AppTheme.space4),
+        FilledButton.icon(
+          onPressed: _completeWorkout,
+          icon: const Icon(Icons.check_circle_outline_rounded),
+          label: const Text('Complete Workout'),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(48),
+          ),
+        ),
+        const SizedBox(height: AppTheme.space2),
+        OutlinedButton.icon(
+          onPressed: _showAddExerciseDialog,
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('Add Another Exercise'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(44),
+          ),
+        ),
+        const SizedBox(height: AppTheme.space6),
+      ],
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Exercise picker sheet
-// ─────────────────────────────────────────────────────────────────────────────
+class _ElapsedTimer extends StatefulWidget {
+  final DateTime startedAt;
 
-class _ExercisePickerSheet extends ConsumerStatefulWidget {
-  const _ExercisePickerSheet();
+  const _ElapsedTimer({required this.startedAt});
 
   @override
-  ConsumerState<_ExercisePickerSheet> createState() =>
-      _ExercisePickerSheetState();
+  State<_ElapsedTimer> createState() => _ElapsedTimerState();
 }
 
-class _ExercisePickerSheetState
-    extends ConsumerState<_ExercisePickerSheet> {
-  final _searchController = TextEditingController();
-  String _query = '';
+class _ElapsedTimerState extends State<_ElapsedTimer> {
+  late final StreamSubscription<int> _subscription;
+  Duration _elapsed = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _elapsed = DateTime.now().difference(widget.startedAt);
+    _subscription = Stream.periodic(const Duration(seconds: 1), (i) => i).listen((_) {
+      if (mounted) {
+        setState(() {
+          _elapsed = DateTime.now().difference(widget.startedAt);
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _subscription.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final exercisesAsync = ref.watch(exercisesProvider);
+    final minutes = _elapsed.inMinutes;
+    final seconds = _elapsed.inSeconds % 60;
+    final formatted =
+        '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    return Text(
+      formatted,
+      style: GoogleFonts.jetBrainsMono(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+}
 
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.75,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) => Column(
+class _ExerciseCard extends ConsumerWidget {
+  final int index;
+  final DraftExercise exercise;
+
+  const _ExerciseCard({
+    required this.index,
+    required this.exercise,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
+    return DataCard(
+      margin: const EdgeInsets.only(bottom: AppTheme.space3),
+      padding: const EdgeInsets.all(AppTheme.space4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Column(
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Add Exercise',
-                      style: TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w700),
+                    Text(
+                      exercise.name.isNotEmpty
+                          ? exercise.name
+                          : 'Unknown Exercise',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
+                    if (exercise.muscleGroup.isNotEmpty)
+                      Text(
+                        exercise.muscleGroup,
+                        style: GoogleFonts.ibmPlexSans(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                   ],
                 ),
-                TextField(
-                  controller: _searchController,
-                  decoration: const InputDecoration(
-                    hintText: 'Search exercises...',
-                    prefixIcon: Icon(Icons.search),
-                    isDense: true,
-                  ),
-                  onChanged: (query) =>
-                      setState(() => _query = query.toLowerCase()),
-                ),
-              ],
-            ),
+              ),
+              Badge(
+                label: '${exercise.sets} sets',
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: AppTheme.space2),
+              IconButton(
+                icon: Icon(Icons.delete_outline_rounded,
+                    size: 20, color: theme.colorScheme.error),
+                tooltip: 'Remove Exercise',
+                onPressed: () => ref
+                    .read(activeWorkoutProvider.notifier)
+                    .removeExercise(index),
+              ),
+            ],
           ),
-          Expanded(
-            child: exercisesAsync.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (error, _) =>
-                  Center(child: Text('Error: $error')),
-              data: (exercises) {
-                final filtered = _query.isEmpty
-                    ? exercises
-                    : exercises
-                        .where((e) =>
-                            e.name.toLowerCase().contains(_query) ||
-                            e.muscleGroup
-                                .toLowerCase()
-                                .contains(_query))
-                        .toList();
-
-                if (filtered.isEmpty) {
-                  return const Center(child: Text('No exercises found'));
+          const SizedBox(height: AppTheme.space3),
+          for (var s = 0; s < exercise.sets; s++)
+            _SetRow(
+              key: ValueKey('${exercise.exerciseId}_set_$s'),
+              setNumber: s + 1,
+              reps: exercise.reps,
+              weight: exercise.weight,
+              onUpdate: (reps, weight) {
+                final updated =
+                    exercise.copyWith(reps: reps, weight: weight);
+                ref
+                    .read(activeWorkoutProvider.notifier)
+                    .updateExercise(index, updated);
+              },
+              onDelete: () {
+                if (exercise.sets > 1) {
+                  final updated =
+                      exercise.copyWith(sets: exercise.sets - 1);
+                  ref
+                      .read(activeWorkoutProvider.notifier)
+                      .updateExercise(index, updated);
+                } else {
+                  ref
+                      .read(activeWorkoutProvider.notifier)
+                      .removeExercise(index);
                 }
-
-                return ListView.builder(
-                  controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final exercise = filtered[index];
-                    return ListTile(
-                      leading: const Icon(Icons.fitness_center,
-                          color: AppTheme.primaryGreen),
-                      title: Text(
-                        exercise.name,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w500),
-                      ),
-                      subtitle: Text(
-                        '${exercise.muscleGroup} • ${exercise.equipment}',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      onTap: () {
-                        ref
-                            .read(activeWorkoutProvider.notifier)
-                            .addExercise(exercise);
-                        Navigator.of(context).pop();
-                      },
-                    );
-                  },
-                );
               },
             ),
+          const SizedBox(height: AppTheme.space2),
+          Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: () {
+                  final updated =
+                      exercise.copyWith(sets: exercise.sets + 1);
+                  ref
+                      .read(activeWorkoutProvider.notifier)
+                      .updateExercise(index, updated);
+                },
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Add Set'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 36),
+                ),
+              ),
+              const SizedBox(width: AppTheme.space2),
+              OutlinedButton.icon(
+                onPressed: () => showRestTimer(context),
+                icon: const Icon(Icons.timer_rounded, size: 18),
+                label: const Text('Rest Timer'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 36),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SetRow extends StatelessWidget {
+  final int setNumber;
+  final int reps;
+  final double weight;
+  final Function(int reps, double weight) onUpdate;
+  final VoidCallback onDelete;
+
+  const _SetRow({
+    super.key,
+    required this.setNumber,
+    required this.reps,
+    required this.weight,
+    required this.onUpdate,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 36,
+            child: Text(
+              '$setNumber',
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppTheme.space2),
+          Expanded(
+            child: TextFormField(
+              initialValue: reps > 0 ? reps.toString() : '',
+              decoration: InputDecoration(
+                labelText: 'Reps',
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                ),
+              ),
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                final newReps = int.tryParse(value) ?? reps;
+                onUpdate(newReps, weight);
+              },
+            ),
+          ),
+          const SizedBox(width: AppTheme.space2),
+          Expanded(
+            child: TextFormField(
+              initialValue: weight > 0
+                  ? (weight % 1 == 0
+                      ? weight.toInt().toString()
+                      : weight.toString())
+                  : '',
+              decoration: InputDecoration(
+                labelText: 'Weight (kg)',
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                ),
+              ),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (value) {
+                final newWeight = double.tryParse(value) ?? weight;
+                onUpdate(reps, newWeight);
+              },
+            ),
+          ),
+          const SizedBox(width: AppTheme.space2),
+          IconButton(
+            icon: Icon(Icons.delete_outline_rounded,
+                color: theme.colorScheme.error, size: 20),
+            tooltip: 'Delete set',
+            onPressed: onDelete,
           ),
         ],
       ),

@@ -6,7 +6,7 @@ import '../../domain/repos/workout_template_repository.dart';
 
 class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
   final SharedPreferences _prefs;
-  static const String _templatesKey = 'fitx_workout_templates';
+  static const String _templatesKey = 'arcfit_workout_templates';
 
   LocalWorkoutTemplateRepository(this._prefs);
 

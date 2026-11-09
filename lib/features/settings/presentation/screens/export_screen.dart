@@ -43,15 +43,15 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
       }
 
       final fileName =
-          'onyxfit_workouts_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
+          'arcfit_workouts_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
       final csvBytes = Uint8List.fromList(utf8.encode(buf.toString()));
 
       await saveAndShareFile(
         bytes: csvBytes,
         fileName: fileName,
         mimeType: 'text/csv',
-        shareText: 'My OnyxFit workout history',
-        shareSubject: 'OnyxFit Workout History',
+        shareText: 'My ArcFit workout history',
+        shareSubject: 'ArcFit Workout History',
       );
 
       _showSnack('Workouts exported successfully as CSV! 📊');
@@ -67,7 +67,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: isError ? AppTheme.errorRed : AppTheme.primaryGreen,
+        backgroundColor: isError ? AppTheme.error : AppTheme.success,
       ),
     );
   }
@@ -86,7 +86,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppTheme.primaryGreen, AppTheme.secondaryBlue],
+                colors: [AppTheme.success, AppTheme.primary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -119,7 +119,7 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
           // CSV Export
           _ExportOptionCard(
             icon: Icons.table_chart_outlined,
-            iconColor: AppTheme.primaryGreen,
+            iconColor: AppTheme.success,
             title: 'Export as CSV',
             subtitle: 'Spreadsheet-compatible format. Works with Excel, Google Sheets.',
             buttonLabel: _exporting ? 'Exporting…' : 'Export CSV',
@@ -131,15 +131,15 @@ class _ExportScreenState extends ConsumerState<ExportScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppTheme.secondaryBlue.withValues(alpha: 0.08),
+              color: AppTheme.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: AppTheme.secondaryBlue.withValues(alpha: 0.2)),
+                  color: AppTheme.primary.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
                 const Icon(Icons.info_outline,
-                    color: AppTheme.secondaryBlue, size: 18),
+                    color: AppTheme.primary, size: 18),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -183,7 +183,7 @@ class _ExportOptionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: theme.colorScheme.outlineVariant, width: 1),
       ),
       child: Row(
         children: [
@@ -208,7 +208,7 @@ class _ExportOptionCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(subtitle,
                     style: TextStyle(
-                        fontSize: 12, color: Colors.grey.shade600)),
+                        fontSize: 12, color: theme.colorScheme.onSurfaceVariant)),
               ],
             ),
           ),

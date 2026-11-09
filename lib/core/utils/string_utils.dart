@@ -1,4 +1,4 @@
-// String Utilities for FitX
+// String Utilities for ArcFit
 
 extension StringExtension on String {
   /// Capitalizes the first letter

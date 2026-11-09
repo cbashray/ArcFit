@@ -1,144 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ActionChip;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
-import '../../../../../core/theme/app_theme.dart';
-
-// ─── Chat Message Entity ──────────────────────────────────────────────────────
-
-enum ChatRole { user, model }
-
-class ChatMessage {
-  final String id;
-  final ChatRole role;
-  final String content;
-  final DateTime timestamp;
-
-  const ChatMessage({
-    required this.id,
-    required this.role,
-    required this.content,
-    required this.timestamp,
-  });
-}
-
-// ─── Coach Provider ───────────────────────────────────────────────────────────
-
-class CoachChatState {
-  final List<ChatMessage> messages;
-  final bool isLoading;
-
-  const CoachChatState({
-    this.messages = const [],
-    this.isLoading = false,
-  });
-
-  CoachChatState copyWith({
-    List<ChatMessage>? messages,
-    bool? isLoading,
-  }) {
-    return CoachChatState(
-      messages: messages ?? this.messages,
-      isLoading: isLoading ?? this.isLoading,
-    );
-  }
-}
-
-final coachChatProvider =
-    NotifierProvider<CoachChatNotifier, CoachChatState>(
-        CoachChatNotifier.new);
-
-class CoachChatNotifier extends Notifier<CoachChatState> {
-  @override
-  CoachChatState build() {
-    return CoachChatState(
-      messages: [
-        ChatMessage(
-          id: 'welcome',
-          role: ChatRole.model,
-          content:
-              "Hey! 👋 I'm your OnyxFit AI Coach. I can help you with workout tips, nutrition advice, recovery strategies, and more. What's on your mind today?",
-          timestamp: DateTime.now(),
-        ),
-      ],
-    );
-  }
-
-  Future<void> sendMessage(String text) async {
-    if (text.trim().isEmpty) return;
-
-    final userMsg = ChatMessage(
-      id: 'user_${DateTime.now().millisecondsSinceEpoch}',
-      role: ChatRole.user,
-      content: text.trim(),
-      timestamp: DateTime.now(),
-    );
-
-    state = state.copyWith(
-      messages: [...state.messages, userMsg],
-      isLoading: true,
-    );
-
-    // Generate AI response (rule-based fallback; swap for Gemini API)
-    await Future.delayed(const Duration(milliseconds: 800));
-    final reply = _generateResponse(text.trim().toLowerCase());
-
-    final aiMsg = ChatMessage(
-      id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-      role: ChatRole.model,
-      content: reply,
-      timestamp: DateTime.now(),
-    );
-
-    state = state.copyWith(
-      messages: [...state.messages, aiMsg],
-      isLoading: false,
-    );
-  }
-
-  void clear() => state = build();
-
-  /// Smart rule-based responses — swap `_generateResponse` body with a Gemini
-  /// API call to `generateContent` for full LLM power.
-  String _generateResponse(String query) {
-    if (query.contains('protein') || query.contains('eat')) {
-      return '💪 For muscle building, aim for **1.6–2.2g of protein per kg of body weight** daily. Great sources include chicken breast (31g/100g), paneer (21g/100g), dal (8g/100g), and whey protein. Spread intake across 4–5 meals for best absorption.';
-    }
-    if (query.contains('fat') || query.contains('lose weight') ||
-        query.contains('calorie')) {
-      return '🔥 For fat loss, create a moderate calorie deficit of 300–500 kcal/day. Keep protein high (2g/kg) to preserve muscle, strength train 3–4x/week, and add 30 min cardio 3x/week. Track your food in the Nutrition tab!';
-    }
-    if (query.contains('rest') || query.contains('recover') ||
-        query.contains('sore')) {
-      return '😴 Recovery is when muscles actually grow! Ensure **7–9 hours of sleep**, eat adequate protein, and consider active recovery (light walking, stretching) on rest days. DOMS (delayed onset muscle soreness) is normal for 24–72 hours after new exercises.';
-    }
-    if (query.contains('chest') || query.contains('push')) {
-      return '🏋️ For chest development, focus on: **Bench Press** (compound strength), **Incline DB Press** (upper chest), **Cable Flyes** (isolation/stretch). Progressive overload is key — increase weight by 2.5kg when you can complete all reps with good form.';
-    }
-    if (query.contains('back') || query.contains('pull')) {
-      return '💪 Build a strong back with: **Deadlifts** (overall mass), **Pull-ups/Lat Pulldowns** (lat width), **Barbell Rows** (thickness), **Face Pulls** (rear delts + health). Pull-to-push ratio of 2:1 prevents imbalances.';
-    }
-    if (query.contains('leg') || query.contains('squat')) {
-      return '🦵 Legs are 60% of your muscle mass! Prioritize: **Squats** (king of exercises), **Romanian Deadlifts** (hamstrings), **Leg Press** (volume), **Lunges** (balance). Don\'t skip legs — they boost total testosterone production!';
-    }
-    if (query.contains('supplement') || query.contains('creatine')) {
-      return '💊 Evidence-based supplements:\n• **Creatine monohydrate** (5g/day) — proven muscle/strength gains\n• **Whey protein** — convenient protein source\n• **Vitamin D3** — especially important in India (low sun exposure indoors)\n• **Caffeine** — proven performance booster\n\nSkip the rest — most are marketing.';
-    }
-    if (query.contains('warm') || query.contains('warmup')) {
-      return '🔥 A good warmup takes 5–10 min:\n1. Light cardio (jumping jacks, bike)\n2. Dynamic stretches (arm circles, leg swings)\n3. Activation (band pull-aparts, glute bridges)\n4. 2–3 warm-up sets at 40–60% of working weight\n\nThis prevents injury and improves performance!';
-    }
-    if (query.contains('Indian') || query.contains('desi') ||
-        query.contains('roti') || query.contains('dal')) {
-      return '🇮🇳 Indian food is **great for fitness**! High-protein options: paneer, dal, rajma, chole, chicken tikka, eggs. For carbs: brown rice, roti, oats-upma, poha. Use your Nutrition tab to track — I\'ve loaded it with 30+ Indian foods with accurate macros!';
-    }
-    if (query.contains('beginner') || query.contains('start') ||
-        query.contains('new')) {
-      return '🌟 Welcome to your fitness journey! Start with:\n• **3 days/week** full-body workouts\n• Master the **big 5**: squat, deadlift, bench, row, overhead press\n• Focus on **form over weight** for first 3 months\n• **Progressive overload**: add a small amount each week\n• Track everything in OnyxFit — data drives progress!';
-    }
-    return '🤔 Great question! As your AI coach, I\'d suggest focusing on consistency above all else. Log your workouts daily, track your nutrition, and aim to progressively overload each week. Small improvements compound into massive results over time. What specific aspect of your training would you like to optimize?';
-  }
-}
-
-// ─── Fitness Coach Screen ─────────────────────────────────────────────────────
+import '../../../../../core/theme/app_theme.dart'
+    show AppTheme;
+import 'package:arcfit/features/shared/presentation/widgets/ui_components.dart';
 
 class FitnessCoachScreen extends ConsumerStatefulWidget {
   const FitnessCoachScreen({super.key});
@@ -148,131 +15,180 @@ class FitnessCoachScreen extends ConsumerStatefulWidget {
 }
 
 class _FitnessCoachScreenState extends ConsumerState<FitnessCoachScreen> {
-  final _textCtrl = TextEditingController();
-  final _scrollCtrl = ScrollController();
-
-  static const _quickPrompts = [
-    '💪 How much protein do I need?',
-    '🔥 How do I lose fat?',
-    '😴 How do I recover faster?',
-    '🏋️ Best chest exercises?',
-    '🦵 Best leg day routine?',
-    '💊 Which supplements work?',
-    '🇮🇳 Best Indian foods for fitness?',
-    '🌟 Tips for beginners',
+  final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
+  final List<_ChatMessage> _messages = [
+    _ChatMessage(
+      text: "Hey! 👋 I'm your ArcFit AI Coach. I can help you with workout tips, nutrition advice, recovery strategies, and more. What's on your mind today?",
+      isUser: false,
+      timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
+    ),
   ];
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _textCtrl.dispose();
-    _scrollCtrl.dispose();
+    _messageController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _sendMessage() {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() {
+      _messages.add(_ChatMessage(text: text, isUser: true, timestamp: DateTime.now()));
+      _messageController.clear();
+      _isLoading = true;
+    });
+
+    // Simulate AI response
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      if (!mounted) return;
+      final response = _generateResponse(text);
+      setState(() {
+        _messages.add(_ChatMessage(text: response, isUser: false, timestamp: DateTime.now()));
+        _isLoading = false;
+      });
+      _scrollToBottom();
+    });
+
+    _scrollToBottom();
+  }
+
+  String _generateResponse(String userMessage) {
+    final lower = userMessage.toLowerCase();
+
+    if (lower.contains('workout') || lower.contains('exercise') || lower.contains('train')) {
+      return "For your next workout, I'd recommend a **Push/Pull/Legs split** hitting each muscle group 2x/week. Since you're doing 5 days, try:\n\n• **Mon**: Push (chest, shoulders, triceps)\n• **Tue**: Pull (back, biceps)\n• **Wed**: Legs (quads, hamstrings, glutes)\n• **Thu**: Upper Body (mixed)\n• **Fri**: Core + Cardio\n\nStart with compound movements (bench, rows, squats) for 3×8-10, then accessories for 3×12-15. Want me to generate a specific workout?";
+    }
+
+    if (lower.contains('diet') || lower.contains('nutrition') || lower.contains('food') || lower.contains('macro') || lower.contains('calorie')) {
+      return "For nutrition, aim for **1.6-2.2g protein per kg bodyweight** daily. Split into 4-5 meals with 30-40g protein each.\n\n**Sample day (80kg male, maintenance ~2500 kcal):**\n• Breakfast: 3 eggs + oats + banana (45g P, 55g C, 15g F)\n• Lunch: Chicken rice bowl + veggies (40g P, 60g C, 10g F)\n• Pre-workout: Greek yogurt + honey (20g P, 30g C, 5g F)\n• Post-workout: Whey + dextrose (30g P, 40g C, 0g F)\n• Dinner: Salmon + sweet potato + broccoli (35g P, 40g C, 15g F)\n\nTotal: ~170g P, 225g C, 45g F. Adjust carbs/fats based on preference!";
+    }
+
+    if (lower.contains('recover') || lower.contains('sleep') || lower.contains('rest') || lower.contains('sore')) {
+      return "Recovery is where growth happens. **Key pillars:**\n\n1. **Sleep**: 7-9 hours non-negotiable. GH peaks in deep sleep.\n2. **Protein timing**: 30-40g before bed (casein/cottage cheese) for overnight MPS.\n3. **Active recovery**: Light cardio + mobility on rest days improves blood flow.\n4. **Deload**: Every 4-6 weeks, cut volume 50% for a week.\n5. **Hydration**: 3-4L water daily. Even 2% dehydration drops performance 10%.\n\nIf soreness >72h, reduce volume 20% next week. Consider creatine (5g daily) for recovery.";
+    }
+
+    if (lower.contains('progress') || lower.contains('pr') || lower.contains('strength') || lower.contains('plateau')) {
+      return "To break plateaus, apply **progressive overload** systematically:\n\n1. **Add weight**: +2.5kg upper / +5kg lower when you hit top of rep range\n2. **Add reps**: Push 1-2 more reps before adding weight\n3. **Add sets**: 4th set when 3×10 feels easy\n4. **Tempo**: Slow eccentric (3s down) increases time under tension\n5. **Rest periods**: 2-3min for compounds, 60-90s for accessories\n\nTrack everything in ArcFit. If stuck 3+ weeks on a lift, deload 15% and rebuild. Consistency > intensity.";
+    }
+
+    return "That's a great question! As your AI coach, I can help with:\n\n🏋️ **Workouts** - Programming, exercise selection, periodization\n🥗 **Nutrition** - Macros, meal timing, supplementation\n😴 **Recovery** - Sleep, deloads, mobility, injury prevention\n📈 **Progress** - Breaking plateaus, PR tracking, volume management\n\nTry asking me something specific like:\n• \"Generate a 4-day upper/lower split\"\n• \"What should I eat for 2000 kcal cutting?\"\n• \"How to fix my bench press plateau?\"\n• \"Best recovery strategies for leg day\"";
   }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollCtrl.hasClients) {
-        _scrollCtrl.animateTo(
-          _scrollCtrl.position.maxScrollExtent,
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+          curve: Curves.easeOutCubic,
         );
       }
     });
   }
 
-  Future<void> _send([String? text]) async {
-    final msg = text ?? _textCtrl.text;
-    if (msg.trim().isEmpty) return;
-    _textCtrl.clear();
-    await ref.read(coachChatProvider.notifier).sendMessage(msg);
-    _scrollToBottom();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final chat = ref.watch(coachChatProvider);
     final theme = Theme.of(context);
-
-    _scrollToBottom();
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: const [Colors.deepPurple, AppTheme.secondaryBlue],
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text('🤖', style: TextStyle(fontSize: 16)),
-            ),
-            const SizedBox(width: 10),
-            const Text('AI Coach'),
-          ],
-        ),
+        title: const Text('AI Coach'),
+        toolbarHeight: 56,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'New conversation',
-            onPressed: () => ref.read(coachChatProvider.notifier).clear(),
+            icon: Icon(Icons.delete_sweep_outlined, size: 22, color: theme.colorScheme.onSurfaceVariant),
+            tooltip: 'Clear Chat',
+            onPressed: () => setState(() => _messages.clear()),
           ),
         ],
       ),
       body: Column(
         children: [
-          // Messages
+          // Quick prompt chips
+          Container(
+            padding: const EdgeInsets.fromLTRB(AppTheme.space4, AppTheme.space3, AppTheme.space4, AppTheme.space3),
+            decoration: BoxDecoration(
+              color: theme.scaffoldBackgroundColor,
+              border: Border(bottom: BorderSide(color: theme.colorScheme.outlineVariant, width: 1)),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _QuickPromptChip(
+                    label: 'Workout Plan',
+                    icon: Icons.fitness_center_rounded,
+                    onTap: () => _messageController.text = 'Generate a workout plan for me',
+                  ),
+                  const SizedBox(width: AppTheme.space2),
+                  _QuickPromptChip(
+                    label: 'Nutrition',
+                    icon: Icons.restaurant_menu_rounded,
+                    onTap: () => _messageController.text = 'Help me with nutrition and macros',
+                  ),
+                  const SizedBox(width: AppTheme.space2),
+                  _QuickPromptChip(
+                    label: 'Recovery',
+                    icon: Icons.bedtime_rounded,
+                    onTap: () => _messageController.text = 'Best recovery strategies',
+                  ),
+                  const SizedBox(width: AppTheme.space2),
+                  _QuickPromptChip(
+                    label: 'Break Plateau',
+                    icon: Icons.trending_up_rounded,
+                    onTap: () => _messageController.text = 'How to break my strength plateau',
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Chat messages
           Expanded(
             child: ListView.builder(
-              controller: _scrollCtrl,
-              padding: const EdgeInsets.all(16),
-              itemCount: chat.messages.length + (chat.isLoading ? 1 : 0),
+              controller: _scrollController,
+              padding: const EdgeInsets.all(AppTheme.space4),
+              itemCount: _messages.length,
               itemBuilder: (context, index) {
-                if (index == chat.messages.length) {
-                  return const _TypingIndicator();
-                }
-                return _MessageBubble(message: chat.messages[index]);
+                final msg = _messages[index];
+                return _ChatBubble(message: msg);
               },
             ),
           ),
 
-          // Quick prompts (shown only when first message)
-          if (chat.messages.length <= 1)
-            SizedBox(
-              height: 46,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _quickPrompts.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  return ActionChip(
-                    label: Text(
-                      _quickPrompts[index],
-                      style: const TextStyle(fontSize: 12),
+          // Typing indicator
+          if (_isLoading)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.space4, vertical: AppTheme.space2),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.deepPurple.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                     ),
-                    onPressed: () =>
-                        _send(_quickPrompts[index].replaceAll(RegExp(r'^[^\w]+'), '')),
-                  );
-                },
+                    child: const Text('🤖', style: TextStyle(fontSize: 16)),
+                  ),
+                  const SizedBox(width: AppTheme.space3),
+                  _TypingIndicator(),
+                ],
               ),
             ),
 
-          const SizedBox(height: 8),
-
           // Input bar
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            padding: const EdgeInsets.fromLTRB(AppTheme.space4, AppTheme.space3, AppTheme.space4, AppTheme.space3),
             decoration: BoxDecoration(
               color: theme.scaffoldBackgroundColor,
-              border: Border(
-                top: BorderSide(color: Colors.grey.shade200),
-              ),
+              border: Border(top: BorderSide(color: theme.colorScheme.outlineVariant, width: 1)),
             ),
             child: SafeArea(
               top: false,
@@ -280,99 +196,142 @@ class _FitnessCoachScreenState extends ConsumerState<FitnessCoachScreen> {
                 children: [
                   Expanded(
                     child: TextField(
-                      controller: _textCtrl,
+                      controller: _messageController,
                       textCapitalization: TextCapitalization.sentences,
-                      decoration: const InputDecoration(
-                        hintText: 'Ask your AI coach...',
+                      decoration: InputDecoration(
+                        hintText: 'Ask me anything...',
+                        prefixIcon: Icon(Icons.mic_outlined, color: theme.colorScheme.onSurfaceVariant),
+                        suffixIcon: IconButton(
+                          icon: Icon(Icons.attach_file_outlined, color: theme.colorScheme.onSurfaceVariant),
+                          onPressed: () {},
+                        ),
                         isDense: true,
-                        border: OutlineInputBorder(),
                       ),
-                      onSubmitted: (_) => _send(),
+                      onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppTheme.space2),
                   FilledButton(
-                    onPressed: chat.isLoading ? null : _send,
+                    onPressed: _isLoading ? null : _sendMessage,
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
                       minimumSize: const Size(48, 48),
-                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
+                      padding: const EdgeInsets.all(12),
                     ),
-                    child: const Icon(Icons.send_rounded),
+                    child: Icon(Icons.send_rounded, size: 22, color: Colors.white),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 8),
         ],
       ),
     );
   }
 }
 
-class _MessageBubble extends StatelessWidget {
-  final ChatMessage message;
+class _QuickPromptChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
 
-  const _MessageBubble({required this.message});
+  const _QuickPromptChip({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isUser = message.role == ChatRole.user;
     final theme = Theme.of(context);
+    return DataChip(
+      label: label,
+      icon: icon,
+      onTap: onTap,
+      color: theme.colorScheme.primary,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    );
+  }
+}
+
+class _ChatMessage {
+  final String text;
+  final bool isUser;
+  final DateTime timestamp;
+
+  _ChatMessage({required this.text, required this.isUser, required this.timestamp});
+}
+
+class _ChatBubble extends StatelessWidget {
+  final _ChatMessage message;
+
+  const _ChatBubble({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isUser = message.isUser;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppTheme.space3),
       child: Row(
-        mainAxisAlignment:
-            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
-            Container(
-              width: 32,
-              height: 32,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: const [Colors.deepPurple, AppTheme.secondaryBlue],
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Text('🤖', style: TextStyle(fontSize: 16)),
+            Avatar(
+              emoji: '🤖',
+              size: 32,
+              backgroundColor: Colors.deepPurple.withValues(alpha: 0.12),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppTheme.space2),
           ],
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.space4, vertical: AppTheme.space3),
               decoration: BoxDecoration(
                 color: isUser
-                    ? AppTheme.primaryGreen
-                    : (theme.brightness == Brightness.dark
-                        ? const Color(0xFF2A2A2A)
-                        : Colors.grey.shade100),
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isUser ? 16 : 4),
-                  bottomRight: Radius.circular(isUser ? 4 : 16),
+                  topLeft: Radius.circular(AppTheme.radiusMd),
+                  topRight: Radius.circular(AppTheme.radiusMd),
+                  bottomLeft: Radius.circular(isUser ? AppTheme.radiusMd : AppTheme.radiusXs),
+                  bottomRight: Radius.circular(isUser ? AppTheme.radiusXs : AppTheme.radiusMd),
                 ),
+                border: isUser ? null : Border.all(color: theme.colorScheme.outlineVariant, width: 1),
               ),
-              child: Text(
-                message.content,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isUser ? Colors.white : null,
-                  height: 1.4,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message.text,
+                    style: GoogleFonts.ibmPlexSans(
+                      fontSize: 14,
+                      color: isUser ? Colors.white : theme.colorScheme.onSurface,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    DateFormat('HH:mm').format(message.timestamp),
+                    style: GoogleFonts.ibmPlexSans(
+                      fontSize: 10,
+                      color: isUser ? Colors.white.withValues(alpha: 0.7) : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-          if (isUser) const SizedBox(width: 8),
+          if (isUser) ...[
+            const SizedBox(width: AppTheme.space2),
+            Avatar(
+              size: 32,
+              backgroundColor: theme.colorScheme.primaryContainer,
+            ),
+          ],
         ],
       ),
     );
@@ -380,85 +339,56 @@ class _MessageBubble extends StatelessWidget {
 }
 
 class _TypingIndicator extends StatefulWidget {
-  const _TypingIndicator();
-
   @override
   State<_TypingIndicator> createState() => _TypingIndicatorState();
 }
 
-class _TypingIndicatorState extends State<_TypingIndicator>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _anim;
+class _TypingIndicatorState extends State<_TypingIndicator> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
-      duration: const Duration(milliseconds: 600),
-    )..repeat(reverse: true);
-    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+    )..repeat();
   }
 
   @override
   void dispose() {
-    _ctrl.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: const [Colors.deepPurple, AppTheme.secondaryBlue],
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (index) {
+            final delay = index * 0.15;
+            final value = (_controller.value - delay).clamp(0.0, 1.0);
+            final scale = (value * 2 - 1).abs();
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Transform.scale(
+                scale: 0.5 + scale * 0.5,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.withValues(alpha: 0.5 + scale * 0.5),
+                    shape: BoxShape.circle,
+                  ),
+                ),
               ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Text('🤖', style: TextStyle(fontSize: 16)),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-                bottomRight: Radius.circular(16),
-                bottomLeft: Radius.circular(4),
-              ),
-            ),
-            child: AnimatedBuilder(
-              animation: _anim,
-              builder: (_, __) => Row(
-                children: List.generate(3, (i) {
-                  final delay = i * 0.2;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: Opacity(
-                      opacity: ((_anim.value + delay) % 1.0)
-                          .clamp(0.2, 1.0),
-                      child: const CircleAvatar(
-                        radius: 4,
-                        backgroundColor: Colors.grey,
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-          ),
-        ],
-      ),
+            );
+          }),
+        );
+      },
     );
   }
 }

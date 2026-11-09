@@ -31,13 +31,13 @@ Future<void> main() async {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
       ],
-      child: const FitXApp(),
+      child: const ArcFitApp(),
     ),
   );
 }
 
-class FitXApp extends ConsumerWidget {
-  const FitXApp({super.key});
+class ArcFitApp extends ConsumerWidget {
+  const ArcFitApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

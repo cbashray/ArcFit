@@ -18,7 +18,7 @@ import '../../domain/entities/workout_plan_entity.dart';
 import '../../domain/repos/adaptive_workout_repository.dart';
 
 class LocalAdaptiveWorkoutRepository implements AdaptiveWorkoutRepository {
-  static const _plansKey = 'fitx_workout_plans';
+  static const _plansKey = 'arcfit_workout_plans';
 
   final SharedPreferences _prefs;
   final ExerciseRepository _exerciseRepository;

@@ -1,11 +1,11 @@
 {
-    "name": "OnyxFit",
-    "short_name": "OnyxFit",
+    "name": "ArcFit",
+    "short_name": "ArcFit",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0D0F12",
     "theme_color": "#0D0F12",
-    "description": "OnyxFit - Precision lifting & AI fitness partner.",
+    "description": "ArcFit - Precision lifting & AI fitness partner.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

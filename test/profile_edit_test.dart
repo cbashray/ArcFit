@@ -1,8 +1,8 @@
-import 'package:fitx/core/providers/app_providers.dart';
-import 'package:fitx/features/auth/data/repos/local_auth_repository.dart';
-import 'package:fitx/features/auth/domain/entities/user_entity.dart';
-import 'package:fitx/features/settings/presentation/screens/settings_screen.dart';
-import 'package:fitx/features/settings/presentation/widgets/edit_profile_sheet.dart';
+import 'package:arcfit/core/providers/app_providers.dart';
+import 'package:arcfit/features/auth/data/repos/local_auth_repository.dart';
+import 'package:arcfit/features/auth/domain/entities/user_entity.dart';
+import 'package:arcfit/features/settings/presentation/screens/settings_screen.dart';
+import 'package:arcfit/features/settings/presentation/widgets/edit_profile_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,7 +12,7 @@ void main() {
   test('UserEntity supports profile fields and copyWith / serialization', () {
     final user = UserEntity(
       id: 'test_123',
-      email: 'alex@fitx.app',
+      email: 'alex@arcfit.app',
       name: 'Alex Rivera',
       age: 26,
       gender: 'Male',
@@ -40,7 +40,7 @@ void main() {
     final repo = LocalAuthRepository(prefs);
 
     final user = await repo.signUp(
-      email: 'test@fitx.app',
+      email: 'test@arcfit.app',
       password: 'pass',
       name: 'Initial Name',
     );
@@ -80,7 +80,7 @@ void main() {
     final localAuth = LocalAuthRepository(prefs);
 
     await localAuth.signUp(
-      email: 'athlete@fitx.app',
+      email: 'athlete@arcfit.app',
       password: 'password123',
       name: 'Jordan Pro',
     );
@@ -108,7 +108,7 @@ void main() {
 
     // Verify Profile section and stats chip
     expect(find.text('Jordan Pro'), findsOneWidget);
-    expect(find.text('athlete@fitx.app'), findsOneWidget);
+    expect(find.text('athlete@arcfit.app'), findsOneWidget);
     expect(find.text('25 yrs'), findsOneWidget);
     expect(find.text('180 cm'), findsOneWidget);
     expect(find.text('78 kg'), findsOneWidget);

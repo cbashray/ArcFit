@@ -1,4 +1,4 @@
-/// User Entity for FitX
+/// User Entity for ArcFit
 class UserEntity {
   final String id;
   final String email;

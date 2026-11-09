@@ -6,10 +6,10 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
   final SharedPreferences _prefs;
 
-  static const String _reminderEnabledKey = 'fitx_workout_reminder_enabled';
-  static const String _reminderHourKey = 'fitx_workout_reminder_hour';
-  static const String _reminderMinuteKey = 'fitx_workout_reminder_minute';
-  static const String _inactivityNudgeKey = 'fitx_inactivity_nudge_enabled';
+  static const String _reminderEnabledKey = 'arcfit_workout_reminder_enabled';
+  static const String _reminderHourKey = 'arcfit_workout_reminder_hour';
+  static const String _reminderMinuteKey = 'arcfit_workout_reminder_minute';
+  static const String _inactivityNudgeKey = 'arcfit_inactivity_nudge_enabled';
 
   NotificationService(this._prefs);
 
@@ -57,8 +57,8 @@ class NotificationService {
     required String body,
   }) async {
     const android = AndroidNotificationDetails(
-      'onyxfit_channel',
-      'OnyxFit Notifications',
+      'arcfit_channel',
+      'ArcFit Notifications',
       channelDescription: 'Workout & Fitness Reminders',
       importance: Importance.high,
       priority: Priority.high,

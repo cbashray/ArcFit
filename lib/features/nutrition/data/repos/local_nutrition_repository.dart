@@ -7,8 +7,8 @@ import '../../domain/entities/nutrition_entities.dart';
 
 /// SharedPreferences-backed nutrition repository with a seeded Indian food database.
 class LocalNutritionRepository {
-  static const _entriesKey = 'fitx_food_entries';
-  static const _goalKey = 'fitx_nutrition_goal';
+  static const _entriesKey = 'arcfit_food_entries';
+  static const _goalKey = 'arcfit_nutrition_goal';
 
   final SharedPreferences _prefs;
   LocalNutritionRepository(this._prefs);

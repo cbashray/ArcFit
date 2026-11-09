@@ -208,7 +208,7 @@ final gamificationRepositoryProvider =
 });
 
 class GamificationRepository {
-  static const _key = 'fitx_badges';
+  static const _key = 'arcfit_badges';
   final SharedPreferences _prefs;
 
   GamificationRepository(this._prefs);

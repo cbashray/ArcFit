@@ -79,6 +79,14 @@ class WorkoutTemplateEntity extends Equatable {
   int get totalSets =>
       exercises.fold<int>(0, (sum, ex) => sum + ex.defaultSets);
 
+  String get name => title;
+
+  int get exerciseCount => exercises.length;
+
+  bool get isBuiltIn => !isCustom;
+
+  int get estimatedDuration => totalSets * 3;
+
   WorkoutTemplateEntity copyWith({
     String? id,
     String? title,

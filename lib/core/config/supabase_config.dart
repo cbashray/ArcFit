@@ -1,4 +1,4 @@
-/// Supabase Configuration for FitX
+/// Supabase Configuration for ArcFit
 class SupabaseConfig {
   /// Project URL and Publishable / Anon Key from Supabase Dashboard > Settings > API.
   static const String url = String.fromEnvironment(

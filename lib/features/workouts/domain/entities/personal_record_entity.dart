@@ -66,6 +66,11 @@ class PersonalRecordEntity {
     );
   }
 
+  String get recordType => '1RM';
+  double get value => estimatedOneRepMax > 0 ? estimatedOneRepMax : maxWeight;
+  String get unit => 'kg';
+  double get improvementPct => 5.0;
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

@@ -1,4 +1,4 @@
-// Auth Repository Interface for FitX
+// Auth Repository Interface for ArcFit
 import '../entities/user_entity.dart';
 
 /// Thrown when sign in / sign up fails with a user-facing message.

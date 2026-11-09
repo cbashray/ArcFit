@@ -1,4 +1,4 @@
-// Adaptive Workout Repository Interface for FitX
+// Adaptive Workout Repository Interface for ArcFit
 import '../entities/workout_plan_entity.dart';
 
 abstract class AdaptiveWorkoutRepository {

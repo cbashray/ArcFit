@@ -7,7 +7,7 @@ import '../../domain/entities/body_metric_entity.dart';
 import '../../domain/repos/body_metric_repository.dart';
 
 class LocalBodyMetricRepository implements BodyMetricRepository {
-  static const _key = 'fitx_body_metrics';
+  static const _key = 'arcfit_body_metrics';
   final SharedPreferences _prefs;
 
   LocalBodyMetricRepository(this._prefs);

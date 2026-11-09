@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArcFit Design System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Light Theme Colors */
+      --primary: #2D4A6B;
+      --primary-light: #4A6FA5;
+      --primary-dark: #1E344F;
+      --primary-container: #E8EEF5;
+      --on-primary-container: #1E344F;
+
+      --secondary: #B8860B;
+      --secondary-light: #D4A83C;
+      --secondary-container: #FFF3E0;
+      --on-secondary-container: #5D4000;
+
+      --success: #007A33;
+      --success-container: #E8F5E9;
+      --warning: #E65100;
+      --warning-container: #FFF8E1;
+      --error: #C62828;
+      --error-container: #FDEDEC;
+
+      --background: #FAFAFA;
+      --surface: #FFFFFF;
+      --surface-variant: #F5F5F5;
+      --surface-container: #EEEEEE;
+      --surface-container-high: #E0E0E0;
+
+      --on-background: #1A1A1A;
+      --on-surface: #1A1A1A;
+      --on-surface-variant: #424242;
+      --outline: #BDBDBD;
+      --outline-variant: #E0E0E0;
+
+      --shadow: rgba(0,0,0,0.05);
+      --shadow-medium: rgba(0,0,0,0.08);
+      --shadow-strong: rgba(0,0,0,0.12);
+
+      /* Spacing */
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+
+      /* Border Radius */
+      --radius-xs: 4px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-full: 999px;
+
+      /* Typography */
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-body: 'IBM Plex Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary: #58A6FF;
+        --primary-light: #79C0FF;
+        --primary-dark: #388BF8;
+        --primary-container: #1F3A5F;
+        --on-primary-container: #D0E8FF;
+
+        --secondary: #D2A106;
+        --secondary-container: #4D3E00;
+
+        --success: #3FB950;
+        --warning: #FFA657;
+        --error: #F85149;
+
+        --background: #0D1117;
+        --surface: #161B22;
+        --surface-variant: #21262D;
+        --surface-container: #30363D;
+        --surface-container-high: #484F58;
+
+        --on-background: #F0F6FC;
+        --on-surface: #F0F6FC;
+        --on-surface-variant: #8B949E;
+        --outline: #30363D;
+        --outline-variant: #21262D;
+
+        --shadow: rgba(0,0,0,0.2);
+        --shadow-medium: rgba(0,0,0,0.3);
+        --shadow-strong: rgba(0,0,0,0.4);
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--background);
+      color: var(--on-background);
+      line-height: 1.5;
+      padding: var(--space-6) var(--space-4);
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    h1, h2, h3, h4 { font-family: var(--font-display); color: var(--on-surface); }
+    h1 { font-size: 2.5rem; font-weight: 500; margin-bottom: var(--space-3); letter-spacing: -0.02em; }
+    h2 { font-size: 1.75rem; font-weight: 500; margin: var(--space-6) 0 var(--space-3); padding-bottom: var(--space-2); border-bottom: 1px solid var(--outline-variant); }
+    h3 { font-size: 1.25rem; font-weight: 500; margin: var(--space-4) 0 var(--space-2); }
+    h4 { font-size: 1rem; font-weight: 500; margin: var(--space-3) 0 var(--space-2); color: var(--on-surface-variant); }
+
+    p { margin-bottom: var(--space-3); color: var(--on-surface-variant); }
+    code { font-family: var(--font-mono); background: var(--surface-container); padding: 2px 6px; border-radius: var(--radius-xs); font-size: 0.9em; }
+    pre { background: var(--surface-container); padding: var(--space-4); border-radius: var(--radius-md); overflow-x: auto; margin: var(--space-4) 0; }
+    pre code { background: none; padding: 0; font-size: 0.85rem; line-height: 1.6; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.3px; }
+    .badge-primary { background: var(--primary-container); color: var(--primary); }
+    .badge-secondary { background: var(--secondary-container); color: var(--secondary); }
+    .badge-success { background: var(--success-container); color: var(--success); }
+    .badge-warning { background: var(--warning-container); color: var(--warning); }
+    .badge-error { background: var(--error-container); color: var(--error); }
+
+    .color-swatch { display: flex; gap: var(--space-2); flex-wrap: wrap; margin: var(--space-3) 0; }
+    .color-box { width: 60px; height: 60px; border-radius: var(--radius-sm); position: relative; border: 1px solid var(--outline-variant); }
+    .color-box::after { content: attr(data-name); position: absolute; bottom: -20px; left: 0; right: 0; font-size: 0.65rem; text-align: center; color: var(--on-surface-variant); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .component-demo { background: var(--surface); border: 1px solid var(--outline-variant); border-radius: var(--radius-md); padding: var(--space-4); margin: var(--space-4) 0; }
+    .component-demo h4 { margin-top: 0; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); padding: 12px 24px; border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 0.9375rem; font-weight: 600; letter-spacing: 0.2px; border: none; cursor: pointer; transition: all 150ms ease; min-height: 48px; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { background: transparent; color: var(--primary); border: 1.5px solid var(--outline); }
+    .btn-secondary:hover { background: var(--primary-container); }
+    .btn-tertiary { background: transparent; color: var(--primary); padding: 8px 16px; min-height: 40px; }
+    .btn-tertiary:hover { background: var(--primary-container); }
+
+    .card { background: var(--surface); border: 1px solid var(--outline-variant); border-radius: var(--radius-md); padding: var(--space-4); margin: var(--space-3) 0; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); }
+    .card-title { font-family: var(--font-display); font-size: 1.125rem; font-weight: 500; }
+
+    .metric-pill { display: inline-flex; align-items: flex-start; gap: var(--space-2); padding: var(--space-2) var(--space-3); background: var(--primary-container); border: 1px solid var(--primary); border-radius: var(--radius-sm); color: var(--primary); }
+    .metric-pill .label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px; color: var(--on-surface-variant); }
+    .metric-pill .value { font-family: var(--font-mono); font-size: 1rem; font-weight: 700; color: var(--on-surface); }
+
+    .progress-ring { width: 100px; height: 100px; transform: rotate(-90deg); }
+    .progress-ring-bg { fill: none; stroke: var(--surface-container-high); stroke-width: 8; }
+    .progress-ring-fg { fill: none; stroke: var(--primary); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 85; transition: stroke-dashoffset 300ms ease; }
+
+    table { width: 100%; border-collapse: collapse; margin: var(--space-4) 0; font-size: 0.875rem; }
+    th, td { padding: var(--space-2) var(--space-3); text-align: left; border-bottom: 1px solid var(--outline-variant); }
+    th { font-family: var(--font-display); font-weight: 500; color: var(--on-surface-variant); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { font-family: var(--font-body); }
+    td.mono { font-family: var(--font-mono); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin: var(--space-4) 0; }
+    .type-scale { font-family: var(--font-display); }
+    .type-scale .body { font-family: var(--font-body); }
+    .type-scale .mono { font-family: var(--font-mono); }
+
+    .screen-mockup { background: var(--surface); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); overflow: hidden; max-width: 375px; margin: var(--space-4) auto; box-shadow: 0 20px 40px var(--shadow-strong); }
+    .screen-mockup header { background: transparent; padding: var(--space-4); border-bottom: 1px solid var(--outline-variant); display: flex; justify-content: space-between; align-items: center; }
+    .screen-mockup .content { padding: var(--space-4); }
+    .screen-mockup .nav-bar { display: flex; justify-content: space-around; padding: var(--space-3) 0; background: var(--surface); border-top: 1px solid var(--outline-variant); position: sticky; bottom: 0; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--on-surface-variant); font-size: 0.6875rem; font-weight: 500; padding: 4px 8px; }
+    .nav-item.active { color: var(--primary); }
+    .nav-item svg { width: 22px; height: 22px; }
+
+    .section { margin-bottom: var(--space-8); }
+    .section-intro { color: var(--on-surface-variant); margin-bottom: var(--space-4); }
+
+    @media (max-width: 600px) {
+      body { padding: var(--space-4) var(--space-3); }
+      h1 { font-size: 2rem; }
+      h2 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <header style="margin-bottom: var(--space-8);">
+    <h1>ArcFit Design System</h1>
+    <p style="font-size: 1.125rem; color: var(--on-surface-variant); max-width: 600px;">Data-Dense & Functional — High information density, clear hierarchy, power-user focused</p>
+  </header>
+
+  <section class="section">
+    <h2>Design Philosophy</h2>
+    <p class="section-intro">ArcFit prioritizes information density and functional clarity over decorative aesthetics. Every pixel serves a purpose. The design system enables power users to scan, compare, and act on fitness data efficiently.</p>
+    <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-3);">
+      <span class="badge badge-primary">Data-Dense</span>
+      <span class="badge badge-secondary">Functional</span>
+      <span class="badge badge-success">Accessible</span>
+      <span class="badge badge-warning">Performant</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Color Palette</h2>
+    <p class="section-intro">Semantic color system with clear light/dark parity. Primary = Slate Blue (trust/focus), Secondary = Amber (energy/progress), Tertiary = Emerald (success/health).</p>
+
+    <h3>Light Theme</h3>
+    <div class="color-swatch">
+      <div class="color-box" style="background: var(--primary)" data-name="Primary #2D4A6B"></div>
+      <div class="color-box" style="background: var(--primary-container)" data-name="Primary Container"></div>
+      <div class="color-box" style="background: var(--secondary)" data-name="Secondary #B8860B"></div>
+      <div class="color-box" style="background: var(--secondary-container)" data-name="Secondary Container"></div>
+      <div class="color-box" style="background: var(--success)" data-name="Success #007A33"></div>
+      <div class="color-box" style="background: var(--success-container)" data-name="Success Container"></div>
+      <div class="color-box" style="background: var(--warning)" data-name="Warning #E65100"></div>
+      <div class="color-box" style="background: var(--warning-container)" data-name="Warning Container"></div>
+      <div class="color-box" style="background: var(--error)" data-name="Error #C62828"></div>
+      <div class="color-box" style="background: var(--error-container)" data-name="Error Container"></div>
+    </div>
+
+    <h3>Neutrals</h3>
+    <div class="color-swatch">
+      <div class="color-box" style="background: var(--background)" data-name="Background #FAFAFA"></div>
+      <div class="color-box" style="background: var(--surface)" data-name="Surface #FFFFFF"></div>
+      <div class="color-box" style="background: var(--surface-variant)" data-name="Surface Variant"></div>
+      <div class="color-box" style="background: var(--surface-container)" data-name="Surface Container"></div>
+      <div class="color-box" style="background: var(--surface-container-high)" data-name="Surface Container High"></div>
+      <div class="color-box" style="background: var(--outline)" data-name="Outline #BDBDBD"></div>
+      <div class="color-box" style="background: var(--outline-variant)" data-name="Outline Variant"></div>
+    </div>
+
+    <h3>Dark Theme</h3>
+    <p class="section-intro">GitHub-inspired dark mode with blue-tinted neutrals for reduced eye strain.</    <div class="color-swatch">
+      <div class="color-box" style="background: #0D1117" data-name="Background #0D1117"></div>
+      <div class="color-box" style="background: #161B22" data-name="Surface #161B22"></div>
+      <div class="color-box" style="background: #21262D" data-name="Surface Variant"></div>
+      <div class="color-box" style="background: #30363D" data-name="Surface Container"></div>
+      <div class="color-box" style="background: #484F58" data-name="Surface Container High"></div>
+      <div class="color-box" style="background: #58A6FF" data-name="Primary #58A6FF"></div>
+      <div class="color-box" style="background: #D2A106" data-name="Secondary #D2A106"></div>
+      <div class="color-box" style="background: #3FB950" data-name="Success #3FB950"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Typography</h2>
+    <p class="section-intro">Three-font system: Space Grotesk (display/headlines), IBM Plex Sans (body/UI), JetBrains Mono (data/numbers). All with tabular figures for aligned metrics.</p>
+
+    <table>
+      <thead>
+        <tr><th>Role</th><th>Font</th><th>Size</th><th>Weight</th><th>Line Height</th><th>Letter Spacing</th><th>Usage</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="type-scale">Display Large</td><td>Space Grotesk</td><td class="mono">57px</td><td>400</td><td>1.12</td><td>-0.25px</td><td>Hero numbers</td></tr>
+        <tr><td class="type-scale">Display Medium</td><td>Space Grotesk</td><td class="mono">45px</td><td>400</td><td>1.16</td><td>0</td><td>Screen titles</td></tr>
+        <tr><td class="type-scale">Display Small</td><td>Space Grotesk</td><td class="mono">36px</td><td>400</td><td>1.22</td><td>0</td><td>Section heroes</td></tr>
+        <tr><td class="type-scale">Headline Large</td><td>Space Grotesk</td><td class="mono">32px</td><td>500</td><td>1.25</td><td>0</td><td>Card titles</td></tr>
+        <tr><td class="type-scale">Headline Medium</td><td>Space Grotesk</td><td class="mono">28px</td><td>500</td><td>1.29</td><td>0</td><td>Sub-sections</td></tr>
+        <tr><td class="type-scale">Headline Small</td><td>Space Grotesk</td><td class="mono">24px</td><td>500</td><td>1.33</td><td>0</td><td>Group headers</td></tr>
+        <tr><td class="type-scale body">Title Large</td><td>Space Grotesk</td><td class="mono">22px</td><td>500</td><td>1.27</td><td>0</td><td>List items</td></tr>
+        <tr><td class="type-scale body">Title Medium</td><td>IBM Plex Sans</td><td class="mono">16px</td><td>600</td><td>1.5</td><td>0.15px</td><td>Buttons, chips</td></tr>
+        <tr><td class="type-scale body">Title Small</td><td>IBM Plex Sans</td><td class="mono">14px</td><td>600</td><td>1.43</td><td>0.1px</td><td>Meta labels</td></tr>
+        <tr><td class="type-scale body">Body Large</td><td>IBM Plex Sans</td><td class="mono">16px</td><td>400</td><td>1.5</td><td>0.5px</td><td>Primary content</td></tr>
+        <tr><td class="type-scale body">Body Medium</td><td>IBM Plex Sans</td><td class="mono">14px</td><td>400</td><td>1.43</td><td>0.25px</td><td>Secondary content</td></tr>
+        <tr><td class="type-scale body">Body Small</td><td>IBM Plex Sans</td><td class="mono">12px</td><td>400</td><td>1.33</td><td>0.4px</td><td>Captions, hints</td></tr>
+        <tr><td class="type-scale mono">Data Large</td><td>JetBrains Mono</td><td class="mono">20px</td><td>700</td><td>1.4</td><td>0</td><td>Big metrics</td></tr>
+        <tr><td class="type-scale mono">Data Medium</td><td>JetBrains Mono</td><td class="mono">16px</td><td>600</td><td>1.5</td><td>0</td><td>Standard metrics</td></tr>
+        <tr><td class="type-scale mono">Data Small</td><td>JetBrains Mono</td><td class="mono">13px</td><td>600</td><td>1.54</td><td>0</td><td>Inline metrics</td></tr>
+        <tr><td class="type-scale mono">Data Micro</td><td>JetBrains Mono</td><td class="mono">11px</td><td>500</td><td>1.45</td><td>0</td><td>Tiny badges</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>Spacing & Layout</h2>
+    <p class="section-intro">4px base unit system. Mobile-first with 16px side gutters.</p>
+
+    <table>
+      <thead><tr><th>Token</th><th>Value</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">space-1</td><td class="mono">4px</td><td>Icon gaps, tight spacing</td></tr>
+        <tr><td class="mono">space-2</td><td class="mono">8px</td><td>Button padding, small gaps</td></tr>
+        <tr><td class="mono">space-3</td><td class="mono">12px</td><td>Component internal padding</td></tr>
+        <tr><td class="mono">space-4</td><td class="mono">16px</td><td>Card padding, screen gutters</td></tr>
+        <tr><td class="mono">space-5</td><td class="mono">20px</td><td>Medium spacing</td></tr>
+        <tr><td class="mono">space-6</td><td class="mono">24px</td><td>Section spacing</td></tr>
+        <tr><td class="mono">space-8</td><td class="mono">32px</td><td>Large section spacing</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Border Radius</h3>
+    <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; margin-top: var(--space-3);">
+      <div style="width: 60px; height: 60px; background: var(--primary-container); border-radius: var(--radius-xs); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--primary);">4px</div>
+      <div style="width: 60px; height: 60px; background: var(--primary-container); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--primary);">8px</div>
+      <div style="width: 60px; height: 60px; background: var(--primary-container); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--primary);">12px</div>
+      <div style="width: 60px; height: 60px; background: var(--primary-container); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--primary);">16px</div>
+      <div style="width: 60px; height: 60px; background: var(--primary-container); border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--primary);">24px</div>
+      <div style="width: 60px; height: 60px; background: var(--primary-container); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: var(--primary);">Full</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Elevation / Shadows</h2>
+    <div class="grid">
+      <div class="card" style="box-shadow: none; border: 1px solid var(--outline-variant);">
+        <h4>Level 0</h4>
+        <p style="font-size: 0.875rem;">Flat (default cards)</p>
+        <code>box-shadow: none</code>
+      </div>
+      <div class="card" style="box-shadow: 0 1px 3px 0 var(--shadow), 0 1px 2px -1px var(--shadow); border: none;">
+        <h4>Level 1</h4>
+        <p style="font-size: 0.875rem;">Card resting</p>
+      </div>
+      <div class="card" style="box-shadow: 0 4px 6px -1px var(--shadow), 0 2px 4px -2px var(--shadow); border: none;">
+        <h4>Level 2</h4>
+        <p style="font-size: 0.875rem;">Hover/pressed</p>
+      </div>
+      <div class="card" style="box-shadow: 0 10px 15px -3px var(--shadow), 0 4px 6px -4px var(--shadow); border: none;">
+        <h4>Level 3</h4>
+        <p style="font-size: 0.875rem;">Modals/dropdowns</p>
+      </div>
+      <div class="card" style="box-shadow: 0 20px 25px -5px var(--shadow), 0 8px 10px -6px var(--shadow); border: none;">
+        <h4>Level 4</h4>
+        <p style="font-size: 0.875rem;">FAB, toasts</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Core Components</h2>
+
+    <h3>Buttons</h3>
+    <div class="component-demo">
+      <div style="display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: center;">
+        <button class="btn btn-primary">Primary</button>
+        <button class="btn btn-secondary">Secondary</button>
+        <button class="btn btn-tertiary">Tertiary</button>
+        <button class="btn btn-primary" disabled style="opacity: 0.5;">Disabled</button>
+      </div>
+      <p style="margin-top: var(--space-3); font-size: 0.875rem;">Height: 48px | Border radius: 8px | Weight: 600</p>
+    </div>
+
+    <h3>Data Card</h3>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Today's Progress</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--on-surface-variant);"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </div>
+      <div style="display: flex; gap: var(--space-5); align-items: center;">
+        <svg class="progress-ring" viewBox="0 0 36 36">
+          <circle class="progress-ring-bg" cx="18" cy="18" r="15.92"/>
+          <circle class="progress-ring-fg" cx="18" cy="18" r="15.92" style="stroke-dashoffset: 42;"/>
+        </svg>
+        <div>
+          <div class="metric-pill"><span class="label">Workout</span><br><span class="value" style="font-size: 1.25rem;">45 min</span></div>
+          <div class="metric-pill" style="margin-top: var(--space-2);"><span class="label">Calories</span><br><span class="value" style="font-size: 1.25rem;">420 kcal</span></div>
+          <div class="metric-pill" style="margin-top: var(--space-2);"><span class="label">Streak</span><br><span class="value" style="font-size: 1.25rem;">12 days</span></div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Metric Pills & Rows</h3>
+    <div class="component-demo">
+      <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+        <div class="metric-pill" style="background: var(--primary-container); border-color: var(--primary); color: var(--primary);">
+          <span class="label">Volume</span><br><span class="value">12.4k kg</span>
+        </div>
+        <div class="metric-pill" style="background: var(--secondary-container); border-color: var(--secondary); color: var(--secondary);">
+          <span class="label">Sessions</span><br><span class="value">87</span>
+        </div>
+        <div class="metric-pill" style="background: var(--success-container); border-color: var(--success); color: var(--success);">
+          <span class="label">This Week</span><br><span class="value">5</span>
+        </div>
+      </div>
+    </div>
+
+    <h3>Progress Ring</h3>
+    <div class="component-demo" style="display: flex; justify-content: center; gap: var(--space-6); align-items: center; flex-wrap: wrap;">
+      <svg class="progress-ring" viewBox="0 0 36 36" style="width: 80px; height: 80px;">
+        <circle class="progress-ring-bg" cx="18" cy="18" r="15.92"/>
+        <circle class="progress-ring-fg" cx="18" cy="18" r="15.92" style="stroke-dashoffset: 85;"/>
+      </svg>
+      <svg class="progress-ring" viewBox="0 0 36 36" style="width: 80px; height: 80px;">
+        <circle class="progress-ring-bg" cx="18" cy="18" r="15.92"/>
+        <circle class="progress-ring-fg" cx="18" cy="18" r="15.92" style="stroke: var(--secondary); stroke-dashoffset: 42;"/>
+      </svg>
+      <svg class="progress-ring" viewBox="0 0 36 36" style="width: 80px; height: 80px;">
+        <circle class="progress-ring-bg" cx="18" cy="18" r="15.92"/>
+        <circle class="progress-ring-fg" cx="18" cy="18" r="15.92" style="stroke: var(--success); stroke-dashoffset: 14;"/>
+      </svg>
+    </div>
+
+    <h3>Input Fields</h3>
+    <div class="component-demo">
+      <div style="display: flex; flex-direction: column; gap: var(--space-3); max-width: 300px;">
+        <div>
+          <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 4px; color: var(--on-surface-variant);">Body Weight (kg)</label>
+          <input type="number" placeholder="75.0" style="width: 100%; padding: 14px 16px; border: 1px solid var(--outline-variant); border-radius: var(--radius-sm); background: var(--surface); color: var(--on-surface); font-family: var(--font-mono); font-size: 1rem;">
+        </div>
+        <div>
+          <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 4px; color: var(--on-surface-variant);">Target Weight</label>
+          <input type="number" placeholder="70.0" style="width: 100%; padding: 14px 16px; border: 2px solid var(--primary); border-radius: var(--radius-sm); background: var(--surface); color: var(--on-surface); font-family: var(--font-mono); font-size: 1rem;">
+        </div>
+      </div>
+    </div>
+
+    <h3>Chips / Pills</h3>
+    <div class="component-demo">
+      <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+        <span style="padding: 6px 12px; background: var(--primary-container); color: var(--primary); border: 1px solid var(--primary); border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; font-family: var(--font-body);">Push</span>
+        <span style="padding: 6px 12px; background: var(--surface-container); color: var(--on-surface); border: 1px solid var(--outline-variant); border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 500; font-family: var(--font-body);">Pull</span>
+        <span style="padding: 6px 12px; background: var(--surface-container); color: var(--on-surface); border: 1px solid var(--outline-variant); border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 500; font-family: var(--font-body);">Legs</span>
+        <span style="padding: 6px 12px; background: var(--surface-container); color: var(--on-surface); border: 1px solid var(--outline-variant); border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 500; font-family: var(--font-body);">Core</span>
+        <span style="padding: 6px 12px; background: var(--success-container); color: var(--success); border: 1px solid var(--success); border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 600; font-family: var(--font-body);">Completed</span>
+      </div>
+    </div>
+
+    <h3>Avatars</h3>
+    <div class="component-demo">
+      <div style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap;">
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-container); display: flex; align-items: center; justify-content: center; font-size: 20px;">💪</div>
+        <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--secondary-container); display: flex; align-items: center; justify-content: center; font-size: 18px;">🏃</div>
+        <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--success-container); display: flex; align-items: center; justify-content: center; font-size: 16px;">🏆</div>
+        <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-container); border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; font-size: 20px;">👤</div>
+        <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--surface-container); display: flex; align-items: center; justify-content: center; font-family: var(--font-body); font-weight: 600; font-size: 14px; color: var(--on-surface);">JD</div>
+      </div>
+    </div>
+
+    <h3>Navigation Bar</h3>
+    <div class="screen-mockup">
+      <header>
+        <h4 style="font-family: var(--font-display); font-weight: 500;">Dashboard</h4>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--on-surface-variant);"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </header>
+      <div class="content" style="min-height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: var(--on-surface-variant);">
+        <p style="text-align: center; padding: var(--space-4);">Screen content area</p>
+      </div>
+      <nav class="nav-bar">
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Dashboard
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+          Leaderboard
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          Workout
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          Nutrition
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+          AI Coach
+        </div>
+      </nav>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Screen Patterns</h2>
+
+    <h3>Dashboard</h3>
+    <ul style="margin-left: var(--space-4); line-height: 2;">
+      <li><strong>Hero:</strong> Progress ring (100px) + 3 metric pills horizontal scroll</li>
+      <li><strong>Quick Actions:</strong> 3-column responsive grid (48px min height)</li>
+      <li><strong>Weekly Chart:</strong> Bar chart (200px height, 7 bars, today highlighted)</li>
+      <li><strong>Progress Card:</strong> Inline metrics row (Volume, Sessions, Week, Time)</li>
+    </ul>
+
+    <h3>Workout Logging</h3>
+    <ul style="margin-left: var(--space-4); line-height: 2;">
+      <li><strong>Sticky Header:</strong> Title + Timer pill + Rest button</li>
+      <li><strong>Exercise Cards:</strong> Expandable, inline steppers (sets/reps/weight)</li>
+      <li><strong>Inline Rest Timer:</strong> Per-exercise rest tracking</li>
+      <li><strong>Bottom Bar:</strong> Cancel / Finish (primary)</li>
+    </ul>
+
+    <h3>Nutrition</h3>
+    <ul style="margin-left: var(--space-4); line-height: 2;">
+      <li><strong>Date Picker:</strong> Compact inline with prev/next</li>
+      <li><strong>Macro Rings:</strong> 3 donut charts horizontal (120px each)</li>
+      <li><strong>Calorie Bar:</strong> Full-width linear progress</li>
+      <li><strong>Meals:</strong> Collapsible sections, inline add food</li>
+    </ul>
+
+    <h3>Leaderboard</h3>
+    <ul style="margin-left: var(--space-4); line-height: 2;">
+      <li><strong>Podium:</strong> Top 3 with gradient backdrop</li>
+      <li><strong>Categories:</strong> Horizontal scrollable chips with icons</li>
+      <li><strong>List:</strong> Rank + Avatar + Name + Metric + Streak badge</li>
+      <li><strong>Current User:</strong> Highlighted row with "YOU" badge</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>Motion & Interaction</h2>
+
+    <table>
+      <thead><tr><th>Token</th><th>Duration</th><th>Easing</th><th>Usage</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">duration-fast</td><td class="mono">150ms</td><td>Standard</td><td>Micro-interactions, ripple</td></tr>
+        <tr><td class="mono">duration-normal</td><td class="mono">250ms</td><td>Standard</td><td>Transitions, expansion</td></tr>
+        <tr><td class="mono">duration-slow</td><td class="mono">350ms</td><td>Standard</td><td>Page transitions, modals</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Press Feedback</h3>
+    <div class="component-demo">
+      <p style="font-size: 0.875rem;">Scale transform on press (0.97x, 100ms ease-out-cubic)</p>
+      <button class="btn btn-primary" style="width: 100%;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Press Me (0.97x scale)</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Accessibility</h2>
+    <ul style="margin-left: var(--space-4); line-height: 2;">
+      <li><strong>Touch Targets:</strong> Minimum 48×48px (Material 3)</li>
+      <li><strong>Contrast:</strong> 4.5:1 (AA), 7:1 (AAA for key metrics)</li>
+      <li><strong>Focus:</strong> 2px primary outline, 2px offset</li>
+      <li><strong>Reduced Motion:</strong> Respects <code>prefers-reduced-motion</code></li>
+      <li><strong>Dynamic Type:</strong> Supports system font scaling up to 200%</li>
+      <li><strong>Semantic Colors:</strong> Success/Warning/Error separate from brand</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>Implementation Status</h2>
+    <div class="grid">
+      <div class="card">
+        <h4>✅ Complete</h4>
+        <ul style="margin-left: var(--space-4); line-height: 1.8; font-size: 0.875rem;">
+          <li>Theme system (light/dark)</li>
+          <li>Typography (3 fonts)</li>
+          <li>Color palette + semantics</li>
+          <li>Spacing & radius tokens</li>
+          <li>Component library</li>
+          <li>Dashboard screen</li>
+          <li>Workout Logging screen</li>
+          <li>Nutrition screen</li>
+          <li>Leaderboard screen</li>
+          <li>Navigation shell</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>🔄 In Progress</h4>
+        <ul style="margin-left: var(--space-4); line-height: 1.8; font-size: 0.875rem;">
+          <li>Progress analytics screen</li>
+          <li>Exercise library</li>
+          <li>Settings & profile</li>
+          <li>Auth flows</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>📋 Planned</h4>
+        <ul style="margin-left: var(--space-4); line-height: 1.8; font-size: 0.875rem;">
+          <li>Tablet layouts</li>
+          <li>Animations polish</li>
+          <li>Accessibility audit</li>
+          <li>Design tokens export</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer style="margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--outline-variant); color: var(--on-surface-variant); font-size: 0.875rem;">
+    <p><strong>ArcFit Design System v1.0</strong> — Data-Dense & Functional</p>
+    <p>Built with Flutter • Material 3 • Space Grotesk • IBM Plex Sans • JetBrains Mono</p>
+  </footer>
+</body>
+</html>

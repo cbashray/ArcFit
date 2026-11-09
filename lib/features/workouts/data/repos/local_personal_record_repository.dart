@@ -7,7 +7,7 @@ import '../../domain/repos/personal_record_repository.dart';
 
 /// SharedPreferences-backed personal record repository.
 class LocalPersonalRecordRepository implements PersonalRecordRepository {
-  static const _key = 'fitx_personal_records';
+  static const _key = 'arcfit_personal_records';
 
   final SharedPreferences _prefs;
 
