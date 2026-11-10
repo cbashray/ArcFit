@@ -4,8 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/routers/app_router.dart' show AppRoutes;
 import '../../../../core/theme/app_theme.dart' show AppTheme;
 import '../../../../features/shared/presentation/widgets/ui_components_export.dart';
+import '../../../exercise_library/data/seed/exercise_seed_data.dart'
+    show ExerciseSeedData;
 import '../../domain/entities/workout_template_entity.dart'
     show WorkoutTemplateEntity;
 import '../../widgets/ai_workout_review_sheet.dart'
@@ -57,6 +60,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     if (match != null) {
       notifier.start(title: match.title);
       for (final ex in match.exercises) {
+        final defWeight = ex.targetWeight ?? _defaultWeightFor(ex.exerciseName);
         notifier.addDraftExercise(
           DraftExercise(
             exerciseId: ex.exerciseId,
@@ -64,7 +68,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
             muscleGroup: ex.muscleGroup,
             sets: ex.defaultSets,
             reps: ex.defaultReps,
-            weight: ex.targetWeight ?? 0.0,
+            weight: defWeight,
           ),
         );
       }
@@ -150,6 +154,21 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
     }
   }
 
+  static double _defaultWeightFor(String exerciseName) {
+    final lower = exerciseName.toLowerCase();
+    if (lower.contains('deadlift')) return 100.0;
+    if (lower.contains('squat') && !lower.contains('split')) return 80.0;
+    if (lower.contains('bench') || lower.contains('chest press')) return 60.0;
+    if (lower.contains('leg press')) return 120.0;
+    if (lower.contains('row')) return 50.0;
+    if (lower.contains('pulldown') || lower.contains('pull down')) return 50.0;
+    if (lower.contains('overhead') || lower.contains('shoulder press')) return 40.0;
+    if (lower.contains('curl') || lower.contains('lateral')) return 12.0;
+    if (lower.contains('tricep') || lower.contains('pushdown')) return 25.0;
+    if (lower.contains('push-up') || lower.contains('pull-up') || lower.contains('chin-up') || lower.contains('dip')) return 0.0;
+    return 20.0;
+  }
+
   Future<void> _completeWorkout() async {
     final messenger = ScaffoldMessenger.of(context);
     final nav = GoRouter.of(context);
@@ -160,7 +179,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
       await showAiWorkoutReviewModal(
         context,
         result.workout!,
-        onDismissed: () => nav.go('/workouts'),
+        onDismissed: () => nav.go(AppRoutes.workoutTemplates),
       );
     } else {
       messenger.showSnackBar(
@@ -173,7 +192,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-      nav.go('/workouts');
+      nav.go(AppRoutes.workoutTemplates);
     }
   }
 
@@ -194,7 +213,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
             onPressed: () {
               ref.read(activeWorkoutProvider.notifier).discard();
               Navigator.pop(ctx);
-              context.go('/workouts');
+              context.go(AppRoutes.workoutTemplates);
             },
             child: const Text('Discard'),
           ),
@@ -205,98 +224,155 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
 
   void _showAddExerciseDialog() {
     final nameCtrl = TextEditingController();
-    final muscleCtrl = TextEditingController(text: 'Chest');
+    String selectedMuscle = 'Chest';
     final setsCtrl = TextEditingController(text: '3');
     final repsCtrl = TextEditingController(text: '10');
     final weightCtrl = TextEditingController(text: '20');
 
+    final exerciseNames = ExerciseSeedData.exercises.map((e) => e.name).toList();
+    const muscleGroups = [
+      'Chest',
+      'Back',
+      'Biceps',
+      'Triceps',
+      'Shoulders',
+      'Legs',
+      'Core',
+      'Full Body',
+    ];
+
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Add Exercise',
-            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Exercise Name',
-                  hintText: 'e.g. Incline Dumbbell Press',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: muscleCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Muscle Group',
-                  hintText: 'e.g. Chest, Back, Legs',
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: setsCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Sets'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: repsCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Reps'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: weightCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true),
-                      decoration:
-                          const InputDecoration(labelText: 'Weight (kg)'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(
+            'Add Exercise',
+            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
           ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Autocomplete<String>(
+                  initialValue: TextEditingValue(text: nameCtrl.text),
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty) {
+                      return exerciseNames.take(8);
+                    }
+                    return exerciseNames.where((option) => option
+                        .toLowerCase()
+                        .contains(textEditingValue.text.toLowerCase()));
+                  },
+                  onSelected: (String selection) {
+                    nameCtrl.text = selection;
+                    final match = ExerciseSeedData.exercises.firstWhere(
+                      (e) => e.name.toLowerCase() == selection.toLowerCase(),
+                      orElse: () => ExerciseSeedData.exercises.first,
+                    );
+                    final group = match.muscleGroup;
+                    final mapped = muscleGroups.firstWhere(
+                      (m) => m.toLowerCase() == group.toLowerCase(),
+                      orElse: () => 'Chest',
+                    );
+                    setDialogState(() {
+                      selectedMuscle = mapped;
+                    });
+                  },
+                  fieldViewBuilder:
+                      (context, controller, focusNode, onFieldSubmitted) {
+                    nameCtrl.text = controller.text;
+                    controller.addListener(() {
+                      nameCtrl.text = controller.text;
+                    });
+                    return TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      decoration: const InputDecoration(
+                        labelText: 'Exercise Name',
+                        hintText: 'e.g. Bench Press or select from library',
+                        prefixIcon: Icon(Icons.search_rounded, size: 20),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedMuscle,
+                  decoration: const InputDecoration(
+                    labelText: 'Muscle Group',
+                  ),
+                  items: muscleGroups
+                      .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                      .toList(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      setDialogState(() => selectedMuscle = val);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: setsCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Sets'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: repsCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Reps'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: weightCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Weight',
+                          suffixText: 'kg',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final name = nameCtrl.text.trim();
+                if (name.isEmpty) return;
+                final sets = int.tryParse(setsCtrl.text) ?? 3;
+                final reps = int.tryParse(repsCtrl.text) ?? 10;
+                final weight = double.tryParse(weightCtrl.text) ?? 20.0;
+                ref.read(activeWorkoutProvider.notifier).addDraftExercise(
+                      DraftExercise(
+                        exerciseId: 'ex_${DateTime.now().millisecondsSinceEpoch}',
+                        name: name,
+                        muscleGroup: selectedMuscle,
+                        sets: sets > 0 ? sets : 1,
+                        reps: reps > 0 ? reps : 1,
+                        weight: weight >= 0 ? weight : 0,
+                      ),
+                    );
+                Navigator.pop(ctx);
+              },
+              child: const Text('Add'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final name = nameCtrl.text.trim();
-              if (name.isEmpty) return;
-              final sets = int.tryParse(setsCtrl.text) ?? 3;
-              final reps = int.tryParse(repsCtrl.text) ?? 10;
-              final weight = double.tryParse(weightCtrl.text) ?? 0.0;
-              ref.read(activeWorkoutProvider.notifier).addDraftExercise(
-                    DraftExercise(
-                      exerciseId: 'ex_${DateTime.now().millisecondsSinceEpoch}',
-                      name: name,
-                      muscleGroup: muscleCtrl.text.trim().isNotEmpty
-                          ? muscleCtrl.text.trim()
-                          : 'General',
-                      sets: sets > 0 ? sets : 1,
-                      reps: reps > 0 ? reps : 1,
-                      weight: weight >= 0 ? weight : 0,
-                    ),
-                  );
-              Navigator.pop(ctx);
-            },
-            child: const Text('Add'),
-          ),
-        ],
       ),
     );
   }
@@ -331,7 +407,7 @@ class _WorkoutLoggingScreenState extends ConsumerState<WorkoutLoggingScreen> {
               message:
                   'Start a workout from the Workouts tab to begin logging.',
               actionLabel: 'Browse Workouts',
-              onAction: () => context.go('/workouts'),
+              onAction: () => context.go(AppRoutes.workoutTemplates),
             )
           : _buildWorkoutContent(activeWorkout),
     );

@@ -92,6 +92,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   trailing: Switch.adaptive(
                     value: _reminderEnabled,
                     onChanged: (v) => setState(() => _reminderEnabled = v),
+                    activeThumbColor: Colors.white,
                     activeTrackColor: theme.colorScheme.primary,
                   ),
                   onTap: () => _showReminderTimePicker(),
@@ -104,6 +105,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   trailing: Switch.adaptive(
                     value: _inactivityNudge,
                     onChanged: (v) => setState(() => _inactivityNudge = v),
+                    activeThumbColor: Colors.white,
                     activeTrackColor: theme.colorScheme.primary,
                   ),
                   onTap: () {},
@@ -343,12 +345,16 @@ class _ProfileStat extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(
-              value,
-              style: GoogleFonts.jetBrainsMono(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: color,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: GoogleFonts.jetBrainsMono(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+                maxLines: 1,
               ),
             ),
             const SizedBox(height: 2),

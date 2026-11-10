@@ -697,12 +697,12 @@ class AppTheme {
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith<Color?>(
           (states) => states.contains(WidgetState.selected)
-              ? primary
+              ? Colors.white
               : Colors.grey.shade400,
         ),
         trackColor: WidgetStateProperty.resolveWith<Color?>(
           (states) => states.contains(WidgetState.selected)
-              ? primaryContainer
+              ? primary
               : Colors.grey.shade300,
         ),
         trackOutlineColor: WidgetStateProperty.resolveWith<Color?>(
@@ -1216,13 +1216,13 @@ class AppTheme {
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith<Color?>(
           (states) => states.contains(WidgetState.selected)
-              ? darkPrimary
-              : Colors.grey.shade600,
+              ? Colors.white
+              : Colors.grey.shade400,
         ),
         trackColor: WidgetStateProperty.resolveWith<Color?>(
           (states) => states.contains(WidgetState.selected)
-              ? darkPrimaryContainer
-              : Colors.grey.shade700,
+              ? darkPrimary
+              : darkSurfaceContainerHigh,
         ),
         trackOutlineColor: WidgetStateProperty.resolveWith<Color?>(
           (states) => states.contains(WidgetState.selected)

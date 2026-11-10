@@ -101,7 +101,9 @@ class LocalWorkoutRepository implements WorkoutRepository {
   double _estimateCalories(
       List<WorkoutExerciseEntity> exercises, double durationMinutes) {
     final totalSets = exercises.fold(0, (sum, ex) => sum + ex.sets);
-    final base = durationMinutes > 0 ? durationMinutes * 5 : totalSets * 8.0;
-    return (base).roundToDouble();
+    final minFromSets = totalSets * 7.5;
+    final minFromDuration = durationMinutes * 6.5;
+    final base = minFromDuration > minFromSets ? minFromDuration : minFromSets;
+    return base > 0 ? base.roundToDouble() : (totalSets > 0 ? 45.0 : 0.0);
   }
 }

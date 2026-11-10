@@ -167,6 +167,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // ── Modal & Secondary Screens (Presented on top of shell) ──────────────
       GoRoute(
+        path: '/workouts',
+        redirect: (context, state) => AppRoutes.workoutTemplates,
+      ),
+      GoRoute(
         path: AppRoutes.workoutLogging,
         name: 'workoutLogging',
         builder: (context, state) => const WorkoutLoggingScreen(),

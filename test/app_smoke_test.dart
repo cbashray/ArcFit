@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:arcfit/core/providers/app_providers.dart';
 import 'package:arcfit/features/auth/data/repos/local_auth_repository.dart';
 import 'package:arcfit/features/progress/presentation/screens/progress_screen.dart';
@@ -6,6 +7,7 @@ import 'package:arcfit/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> pumpApp(WidgetTester tester) async {
@@ -121,5 +123,42 @@ void main() {
     expect(find.text('Overview'), findsOneWidget);
     expect(find.text('0 kg'), findsOneWidget);
     expect(find.text('Volume Trend'), findsOneWidget);
+  });
+
+  testWidgets('/workouts route redirects to templates without GoException',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'arcfit_users': jsonEncode({
+        'user_1': {
+          'id': 'user_1',
+          'email': 'demo@arcfit.app',
+          'name': 'Demo Athlete',
+          'password': 'demo',
+          'preferences': {},
+          'created_at': DateTime.now().toIso8601String(),
+        }
+      }),
+      'arcfit_session_user_id': 'user_1',
+    });
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+        child: const ArcFitApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Navigate to /workouts via go_router
+    final scaffoldContext = tester.element(find.byType(Scaffold).first);
+    GoRouter.of(scaffoldContext).go('/workouts');
+    await tester.pumpAndSettle();
+
+    // Should render Workout Templates screen, NOT Page Not Found
+    expect(find.text('Page Not Found'), findsNothing);
+    expect(find.text('Push Day — Hypertrophy'), findsOneWidget);
   });
 }

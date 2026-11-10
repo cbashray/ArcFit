@@ -14,10 +14,55 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
   Future<List<WorkoutTemplateEntity>> getTemplates() async {
     await seedDefaultTemplatesIfEmpty();
     final rawList = _prefs.getStringList(_templatesKey) ?? [];
-    return rawList
+    final templates = rawList
         .map((e) =>
             WorkoutTemplateEntity.fromJson(jsonDecode(e) as Map<String, dynamic>))
         .toList();
+
+    // Auto-migrate templates that had null target weights
+    bool needsUpdate = false;
+    for (var i = 0; i < templates.length; i++) {
+      final t = templates[i];
+      if (t.exercises.any((e) => e.targetWeight == null)) {
+        final updatedExercises = t.exercises.map((e) {
+          if (e.targetWeight != null) return e;
+          return TemplateExerciseEntity(
+            exerciseId: e.exerciseId,
+            exerciseName: e.exerciseName,
+            muscleGroup: e.muscleGroup,
+            defaultSets: e.defaultSets,
+            defaultReps: e.defaultReps,
+            targetWeight: _fallbackWeight(e.exerciseName),
+          );
+        }).toList();
+        templates[i] = t.copyWith(exercises: updatedExercises);
+        needsUpdate = true;
+      }
+    }
+    if (needsUpdate) {
+      final updatedList = templates.map((t) => jsonEncode(t.toJson())).toList();
+      await _prefs.setStringList(_templatesKey, updatedList);
+    }
+
+    return templates;
+  }
+
+  static double _fallbackWeight(String name) {
+    final lower = name.toLowerCase();
+    if (lower.contains('deadlift')) return 100.0;
+    if (lower.contains('squat') && !lower.contains('split')) return 80.0;
+    if (lower.contains('bench') || lower.contains('chest press')) return 60.0;
+    if (lower.contains('leg press')) return 120.0;
+    if (lower.contains('row')) return 50.0;
+    if (lower.contains('pulldown')) return 50.0;
+    if (lower.contains('shoulder press') || lower.contains('overhead')) return 40.0;
+    if (lower.contains('curl')) return 14.0;
+    if (lower.contains('lateral')) return 10.0;
+    if (lower.contains('tricep')) return 25.0;
+    if (lower.contains('leg curl')) return 45.0;
+    if (lower.contains('calf')) return 40.0;
+    if (lower.contains('plank') || lower.contains('pull-up') || lower.contains('push-up')) return 10.0;
+    return 20.0;
   }
 
   @override
@@ -70,6 +115,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Chest',
             defaultSets: 4,
             defaultReps: 8,
+            targetWeight: 60.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'incline_dumbbell_press',
@@ -77,6 +123,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Chest',
             defaultSets: 3,
             defaultReps: 10,
+            targetWeight: 22.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'overhead_press',
@@ -84,6 +131,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Shoulders',
             defaultSets: 3,
             defaultReps: 10,
+            targetWeight: 40.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'lateral_raise',
@@ -91,6 +139,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Shoulders',
             defaultSets: 4,
             defaultReps: 15,
+            targetWeight: 10.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'tricep_pushdown',
@@ -98,6 +147,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Triceps',
             defaultSets: 3,
             defaultReps: 12,
+            targetWeight: 25.0,
           ),
         ],
       ),
@@ -114,6 +164,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Back',
             defaultSets: 4,
             defaultReps: 6,
+            targetWeight: 100.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'barbell_row',
@@ -121,6 +172,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Back',
             defaultSets: 4,
             defaultReps: 8,
+            targetWeight: 50.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'lat_pulldown',
@@ -128,6 +180,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Back',
             defaultSets: 3,
             defaultReps: 10,
+            targetWeight: 50.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'face_pull',
@@ -135,6 +188,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Shoulders',
             defaultSets: 3,
             defaultReps: 15,
+            targetWeight: 20.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'bicep_curl',
@@ -142,6 +196,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Biceps',
             defaultSets: 3,
             defaultReps: 12,
+            targetWeight: 14.0,
           ),
         ],
       ),
@@ -158,6 +213,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Quads',
             defaultSets: 4,
             defaultReps: 8,
+            targetWeight: 80.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'romanian_deadlift',
@@ -165,6 +221,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Hamstrings',
             defaultSets: 3,
             defaultReps: 10,
+            targetWeight: 70.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'leg_press',
@@ -172,6 +229,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Quads',
             defaultSets: 3,
             defaultReps: 12,
+            targetWeight: 120.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'leg_curl',
@@ -179,6 +237,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Hamstrings',
             defaultSets: 3,
             defaultReps: 12,
+            targetWeight: 45.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'calf_raise',
@@ -186,6 +245,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Calves',
             defaultSets: 4,
             defaultReps: 15,
+            targetWeight: 40.0,
           ),
         ],
       ),
@@ -202,6 +262,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Chest',
             defaultSets: 4,
             defaultReps: 8,
+            targetWeight: 50.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'pull_up',
@@ -209,6 +270,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Back',
             defaultSets: 3,
             defaultReps: 8,
+            targetWeight: 10.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'seated_cable_row',
@@ -216,6 +278,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Back',
             defaultSets: 3,
             defaultReps: 10,
+            targetWeight: 50.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'dumbbell_shoulder_press',
@@ -223,6 +286,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Shoulders',
             defaultSets: 3,
             defaultReps: 10,
+            targetWeight: 18.0,
           ),
         ],
       ),
@@ -239,6 +303,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Quads',
             defaultSets: 3,
             defaultReps: 8,
+            targetWeight: 70.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'bench_press',
@@ -246,6 +311,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Chest',
             defaultSets: 3,
             defaultReps: 8,
+            targetWeight: 60.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'lat_pulldown',
@@ -253,6 +319,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Back',
             defaultSets: 3,
             defaultReps: 10,
+            targetWeight: 50.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'dumbbell_lunge',
@@ -260,6 +327,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Legs',
             defaultSets: 3,
             defaultReps: 12,
+            targetWeight: 16.0,
           ),
           TemplateExerciseEntity(
             exerciseId: 'plank',
@@ -267,6 +335,7 @@ class LocalWorkoutTemplateRepository implements WorkoutTemplateRepository {
             muscleGroup: 'Core',
             defaultSets: 3,
             defaultReps: 60,
+            targetWeight: 10.0,
           ),
         ],
       ),

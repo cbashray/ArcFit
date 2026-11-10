@@ -114,63 +114,110 @@ class _OverviewStatsRow extends StatelessWidget {
     final totalWorkouts = workouts.length;
     final totalVolume = workouts.fold<double>(
       0,
-      (sum, w) =>
-          sum +
-          w.exercises.fold<double>(
-            0,
-            (eSum, e) => eSum + ((e.weight ?? 0) * e.reps * e.sets),
-          ),
+      (sum, w) {
+        try {
+          return sum +
+              (w.exercises as List).fold<double>(
+                0,
+                (eSum, e) =>
+                    eSum +
+                    (((e.weight as num?)?.toDouble() ?? 0.0) *
+                        ((e.reps as num?)?.toInt() ?? 1) *
+                        ((e.sets as num?)?.toInt() ?? 1)),
+              );
+        } catch (_) {
+          return sum;
+        }
+      },
     );
-    final totalDuration = workouts.fold<int>(0, (sum, w) => (sum + w.durationMinutes.round()).toInt());
+    final totalDuration = workouts.fold<int>(0, (sum, w) {
+      try {
+        final d = (w.durationMinutes as num?)?.toDouble() ?? 0.0;
+        return sum + d.round();
+      } catch (_) {
+        return sum;
+      }
+    });
     final thisWeekWorkouts = workouts.where((w) {
-      final diff = DateTime.now().difference(w.date).inDays;
-      return diff < 7;
+      try {
+        final diff = DateTime.now().difference(w.date as DateTime).inDays;
+        return diff < 7;
+      } catch (_) {
+        return false;
+      }
     }).length;
 
-    return Row(
-      children: [
-        Expanded(child: _OverviewStatCard(
-          label: 'Total Volume',
-          value: totalVolume >= 1000 ? '${(totalVolume / 1000).toStringAsFixed(1)}k kg' : '${totalVolume.round()} kg',
-          icon: Icons.fitness_center_rounded,
-          color: theme.colorScheme.primary,
-        )),
-        const SizedBox(width: AppTheme.space3),
-        Expanded(child: _OverviewStatCard(
-          label: 'Workouts',
-          value: '$totalWorkouts',
-          icon: Icons.history_rounded,
-          color: theme.colorScheme.secondary,
-        )),
-        const SizedBox(width: AppTheme.space3),
-        Expanded(child: _OverviewStatCard(
-          label: 'This Week',
-          value: '$thisWeekWorkouts',
-          icon: Icons.calendar_today_rounded,
-          color: theme.colorScheme.tertiary,
-        )),
-        const SizedBox(width: AppTheme.space3),
-        Expanded(child: _OverviewStatCard(
-          label: 'Streak',
-          value: '$streak d',
-          icon: Icons.local_fire_department_rounded,
-          color: Colors.deepOrange,
-        )),
-        const SizedBox(width: AppTheme.space3),
-        Expanded(child: _OverviewStatCard(
-          label: 'PRs',
-          value: '$prsCount',
-          icon: Icons.emoji_events_rounded,
-          color: Colors.amber,
-        )),
-        const SizedBox(width: AppTheme.space3),
-        Expanded(child: _OverviewStatCard(
-          label: 'Total Time',
-          value: totalDuration >= 60 ? '${(totalDuration / 60).toStringAsFixed(1)}h' : '${totalDuration}m',
-          icon: Icons.timer_outlined,
-          color: Colors.deepPurple,
-        )),
-      ],
+    return SizedBox(
+      height: 116,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        clipBehavior: Clip.none,
+        children: [
+          SizedBox(
+            width: 112,
+            child: _OverviewStatCard(
+              label: 'Total Volume',
+              value: totalVolume >= 1000
+                  ? '${(totalVolume / 1000).toStringAsFixed(1)}k kg'
+                  : '${totalVolume.round()} kg',
+              icon: Icons.fitness_center_rounded,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: AppTheme.space3),
+          SizedBox(
+            width: 112,
+            child: _OverviewStatCard(
+              label: 'Workouts',
+              value: '$totalWorkouts',
+              icon: Icons.history_rounded,
+              color: theme.colorScheme.secondary,
+            ),
+          ),
+          const SizedBox(width: AppTheme.space3),
+          SizedBox(
+            width: 112,
+            child: _OverviewStatCard(
+              label: 'This Week',
+              value: '$thisWeekWorkouts',
+              icon: Icons.calendar_today_rounded,
+              color: theme.colorScheme.tertiary,
+            ),
+          ),
+          const SizedBox(width: AppTheme.space3),
+          SizedBox(
+            width: 112,
+            child: _OverviewStatCard(
+              label: 'Streak',
+              value: '$streak d',
+              icon: Icons.local_fire_department_rounded,
+              color: Colors.deepOrange,
+            ),
+          ),
+          const SizedBox(width: AppTheme.space3),
+          SizedBox(
+            width: 112,
+            child: _OverviewStatCard(
+              label: 'PRs',
+              value: '$prsCount',
+              icon: Icons.emoji_events_rounded,
+              color: Colors.amber,
+            ),
+          ),
+          const SizedBox(width: AppTheme.space3),
+          SizedBox(
+            width: 112,
+            child: _OverviewStatCard(
+              label: 'Total Time',
+              value: totalDuration >= 60
+                  ? '${(totalDuration / 60).toStringAsFixed(1)}h'
+                  : '${totalDuration}m',
+              icon: Icons.timer_outlined,
+              color: Colors.deepPurple,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -200,6 +247,7 @@ class _OverviewStatCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Row(
             children: [
@@ -216,16 +264,19 @@ class _OverviewStatCard extends StatelessWidget {
               const Spacer(),
             ],
           ),
-          const SizedBox(height: AppTheme.space3),
-          Text(
-            value,
-            style: GoogleFonts.jetBrainsMono(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: theme.colorScheme.onSurface,
+          const SizedBox(height: AppTheme.space2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: GoogleFonts.jetBrainsMono(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurface,
+              ),
+              maxLines: 1,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
           Text(
@@ -236,6 +287,8 @@ class _OverviewStatCard extends StatelessWidget {
               letterSpacing: 0.5,
               color: theme.colorScheme.onSurfaceVariant,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

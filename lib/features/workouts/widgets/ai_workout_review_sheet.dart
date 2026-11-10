@@ -56,11 +56,17 @@ class _AiWorkoutReviewSheet extends ConsumerWidget {
 
     // Muscle balance
     final muscleVolume = <String, double>{};
+    final muscleReps = <String, int>{};
     for (final ex in workout.exercises) {
-      muscleVolume[ex.muscleGroup] = (muscleVolume[ex.muscleGroup] ?? 0) + ((ex.weight ?? 0) * ex.sets * ex.reps);
+      final vol = ((ex.weight ?? 0) * ex.sets * ex.reps);
+      muscleVolume[ex.muscleGroup] = (muscleVolume[ex.muscleGroup] ?? 0) + vol;
+      muscleReps[ex.muscleGroup] = (muscleReps[ex.muscleGroup] ?? 0) + (ex.sets * ex.reps);
     }
     final totalMuscleVolume = muscleVolume.values.fold(0.0, (a, b) => a + b);
-    final balanceScore = _calculateBalanceScore(muscleVolume);
+    final totalMuscleReps = muscleReps.values.fold(0, (a, b) => a + b);
+    final balanceScore = _calculateBalanceScore(totalMuscleVolume > 0
+        ? muscleVolume
+        : muscleReps.map((k, v) => MapEntry(k, v.toDouble())));
 
     // AI Score (0-10)
     final aiScore = _calculateAiScore(totalSets, totalVolume, duration, balanceScore);
@@ -290,12 +296,22 @@ class _AiWorkoutReviewSheet extends ConsumerWidget {
                         // Muscle volume bars
                         ...(muscleVolume.entries.toList()
                               ..sort((a, b) => b.value.compareTo(a.value)))
-                            .map((entry) => _MuscleVolumeBar(
-                                  muscle: entry.key,
-                                  volume: entry.value,
-                                  percentage: totalMuscleVolume > 0 ? (entry.value / totalMuscleVolume) : 0,
-                                  color: _getMuscleColor(entry.key),
-                                )),
+                            .map((entry) {
+                              final isZeroVol = totalMuscleVolume <= 0;
+                              final reps = muscleReps[entry.key] ?? 0;
+                              final pct = isZeroVol
+                                  ? (totalMuscleReps > 0
+                                      ? reps / totalMuscleReps
+                                      : 1.0 / muscleVolume.length)
+                                  : (entry.value / totalMuscleVolume);
+                              return _MuscleVolumeBar(
+                                muscle: entry.key,
+                                volume: entry.value,
+                                reps: isZeroVol ? reps : null,
+                                percentage: pct,
+                                color: _getMuscleColor(entry.key),
+                              );
+                            }),
                       ],
                     ),
                   ),
@@ -527,12 +543,14 @@ class _PrCard extends StatelessWidget {
 class _MuscleVolumeBar extends StatelessWidget {
   final String muscle;
   final double volume;
+  final int? reps;
   final double percentage;
   final Color color;
 
   const _MuscleVolumeBar({
     required this.muscle,
     required this.volume,
+    this.reps,
     required this.percentage,
     required this.color,
   });
@@ -540,6 +558,10 @@ class _MuscleVolumeBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final volumeText = reps != null
+        ? '$reps reps (${(percentage * 100).round()}%)'
+        : '${volume >= 1000 ? (volume / 1000).toStringAsFixed(1) : volume.round()} kg (${(percentage * 100).round()}%)';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: AppTheme.space2),
       child: Column(
@@ -566,7 +588,7 @@ class _MuscleVolumeBar extends StatelessWidget {
                 ],
               ),
               Text(
-                '${volume >= 1000 ? (volume / 1000).toStringAsFixed(1) : volume.round()} kg (${(percentage * 100).toInt()}%)',
+                volumeText,
                 style: GoogleFonts.jetBrainsMono(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,

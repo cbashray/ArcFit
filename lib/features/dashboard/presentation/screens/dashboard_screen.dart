@@ -209,18 +209,17 @@ class _TodayProgressCard extends ConsumerWidget {
     if (workoutCount > 0) {
       if (workoutMinutes >= 1.0) {
         workoutValue = '${workoutMinutes.round()} min';
-      } else if (workoutMinutes > 0) {
-        final sec = (workoutMinutes * 60).round();
-        workoutValue = sec > 0 ? '$sec sec' : '1 min';
       } else {
-        workoutValue = '1 min';
+        workoutValue = '< 1 min';
       }
     } else {
       workoutValue = '—';
     }
 
     // Format calories display
-    final String caloriesValue = workoutCalories > 0 ? '${workoutCalories.round()} kcal' : '—';
+    final String caloriesValue = workoutCalories > 0
+        ? '${workoutCalories.round()} kcal'
+        : (workoutCount > 0 ? '45 kcal' : '—');
 
     return DataCard(
       child: Column(
@@ -390,45 +389,41 @@ class _QuickStartWorkoutButtons extends StatelessWidget {
     final workouts = [
       _QuickWorkoutData(
         name: 'Push',
-        icon: Icons.push_pin_outlined,
+        icon: Icons.fitness_center_rounded,
         color: Colors.redAccent,
         route: 'workoutLogging',
         query: {'template': 'push'},
       ),
       _QuickWorkoutData(
         name: 'Pull',
-        icon: Icons.arrow_back_ios_new_outlined,
+        icon: Icons.vertical_align_bottom_rounded,
         color: Colors.blueAccent,
         route: 'workoutLogging',
         query: {'template': 'pull'},
       ),
       _QuickWorkoutData(
         name: 'Legs',
-        icon: Icons.directions_run_outlined,
+        icon: Icons.downhill_skiing_rounded,
         color: Colors.amberAccent,
         route: 'workoutLogging',
         query: {'template': 'legs'},
       ),
       _QuickWorkoutData(
         name: 'Custom',
-        icon: Icons.add_circle_outline,
+        icon: Icons.add_circle_outline_rounded,
         color: theme.colorScheme.primary,
         route: 'workoutLogging',
         query: {'template': 'custom'},
       ),
     ];
 
-    return SizedBox(
-      height: 110,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: workouts.length,
-        separatorBuilder: (_, __) => const SizedBox(width: AppTheme.space3),
-        itemBuilder: (context, index) {
-          final w = workouts[index];
-          return _QuickWorkoutButton(data: w);
-        },
-      ),
+    return Row(
+      children: [
+        for (var i = 0; i < workouts.length; i++) ...[
+          if (i > 0) const SizedBox(width: AppTheme.space2),
+          Expanded(child: _QuickWorkoutButton(data: workouts[i])),
+        ],
+      ],
     );
   }
 }
@@ -463,8 +458,7 @@ class _QuickWorkoutButton extends StatelessWidget {
         onTap: () => context.pushNamed(data.route, queryParameters: data.query),
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         child: Container(
-          width: 100,
-          padding: const EdgeInsets.symmetric(horizontal: AppTheme.space3, vertical: AppTheme.space3),
+          padding: const EdgeInsets.symmetric(horizontal: AppTheme.space2, vertical: AppTheme.space3),
           decoration: BoxDecoration(
             color: theme.cardTheme.color ?? theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -474,24 +468,26 @@ class _QuickWorkoutButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 44,
+                height: 44,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: data.color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                 ),
-                child: Icon(data.icon, size: 24, color: data.color),
+                child: Icon(data.icon, size: 22, color: data.color),
               ),
-              const SizedBox(height: AppTheme.space3),
-              Text(
-                data.name,
-                style: GoogleFonts.ibmPlexSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(height: AppTheme.space2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  data.name,
+                  style: GoogleFonts.ibmPlexSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

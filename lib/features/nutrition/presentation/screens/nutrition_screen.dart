@@ -44,7 +44,7 @@ class NutritionScreen extends ConsumerWidget {
         ),
         data: (nutrition) {
           return ListView(
-            padding: const EdgeInsets.fromLTRB(AppTheme.space4, AppTheme.space3, AppTheme.space4, AppTheme.space6),
+            padding: const EdgeInsets.fromLTRB(AppTheme.space4, AppTheme.space3, AppTheme.space4, 96),
             children: [
               // Date selector
               _DateRow(
@@ -290,7 +290,7 @@ class _MacroRing extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '/ $goal',
+                    'of $goal',
                     style: GoogleFonts.ibmPlexSans(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
