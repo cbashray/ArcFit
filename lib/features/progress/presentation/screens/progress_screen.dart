@@ -9,6 +9,8 @@ import '../../../../core/theme/app_theme.dart'
     show AppTheme;
 import '../../../workouts/presentation/providers/workout_providers.dart'
     show workoutsProvider, personalRecordsProvider, streakProvider;
+import '../../../workouts/domain/entities/workout_entity.dart'
+    show WorkoutEntity;
 import '../../../workouts/domain/entities/personal_record_entity.dart'
     show PersonalRecordEntity;
 import '../../../../features/shared/presentation/widgets/ui_components_export.dart';
@@ -40,7 +42,7 @@ class ProgressScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Error: $e', style: GoogleFonts.ibmPlexSans(color: theme.colorScheme.error))),
         data: (workouts) {
           final streak = streakAsync.valueOrNull ?? 0;
-          final prs = prsAsync.valueOrNull ?? [];
+          final prs = prsAsync.valueOrNull ?? <PersonalRecordEntity>[];
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(AppTheme.space4, AppTheme.space3, AppTheme.space4, AppTheme.space6),
@@ -98,7 +100,7 @@ class ProgressScreen extends ConsumerWidget {
 // ═══════════════════════════════════════════════════════════════════════════════════════
 
 class _OverviewStatsRow extends StatelessWidget {
-  final List<dynamic> workouts;
+  final List<WorkoutEntity> workouts;
   final int streak;
   final int prsCount;
 
@@ -113,38 +115,16 @@ class _OverviewStatsRow extends StatelessWidget {
     final theme = Theme.of(context);
     final totalWorkouts = workouts.length;
     final totalVolume = workouts.fold<double>(
-      0,
-      (sum, w) {
-        try {
-          return sum +
-              (w.exercises as List).fold<double>(
-                0,
-                (eSum, e) =>
-                    eSum +
-                    (((e.weight as num?)?.toDouble() ?? 0.0) *
-                        ((e.reps as num?)?.toInt() ?? 1) *
-                        ((e.sets as num?)?.toInt() ?? 1)),
-              );
-        } catch (_) {
-          return sum;
-        }
-      },
+      0.0,
+      (sum, w) => sum + w.totalVolume,
     );
-    final totalDuration = workouts.fold<int>(0, (sum, w) {
-      try {
-        final d = (w.durationMinutes as num?)?.toDouble() ?? 0.0;
-        return sum + d.round();
-      } catch (_) {
-        return sum;
-      }
-    });
+    final totalDuration = workouts.fold<int>(
+      0,
+      (sum, w) => sum + w.durationMinutes.round(),
+    );
+    final now = DateTime.now();
     final thisWeekWorkouts = workouts.where((w) {
-      try {
-        final diff = DateTime.now().difference(w.date as DateTime).inDays;
-        return diff < 7;
-      } catch (_) {
-        return false;
-      }
+      return now.difference(w.date).inDays < 7;
     }).length;
 
     return SizedBox(
@@ -301,7 +281,7 @@ class _OverviewStatCard extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════════════
 
 class _VolumeLineChart extends StatelessWidget {
-  final List<dynamic> workouts;
+  final List<WorkoutEntity> workouts;
 
   const _VolumeLineChart({required this.workouts});
 
@@ -327,6 +307,7 @@ class _VolumeLineChart extends StatelessWidget {
     final maxVolume = rawMax > 0 ? rawMax : 1000.0;
     final minVolume = rawMin.isFinite ? rawMin : 0.0;
     final interval = (maxVolume / 4) > 0 ? (maxVolume / 4) : 250.0;
+    final safeInterval = interval > 0 ? interval : 1.0;
 
     return DataCard(
       child: SizedBox(
@@ -340,7 +321,7 @@ class _VolumeLineChart extends StatelessWidget {
             gridData: FlGridData(
               show: true,
               drawVerticalLine: false,
-              horizontalInterval: interval,
+              horizontalInterval: safeInterval,
               getDrawingHorizontalLine: (value) => FlLine(
                 color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
                 strokeWidth: 1,
@@ -353,7 +334,7 @@ class _VolumeLineChart extends StatelessWidget {
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 48,
-                  interval: interval,
+                  interval: safeInterval,
                   getTitlesWidget: (value, _) {
                     if (value <= 0) return const SizedBox.shrink();
                     return Padding(
@@ -444,7 +425,7 @@ class _VolumeLineChart extends StatelessWidget {
     );
   }
 
-  List<_WeeklyVolumePoint> _getWeeklyVolume(List<dynamic> workouts) {
+  List<_WeeklyVolumePoint> _getWeeklyVolume(List<WorkoutEntity> workouts) {
     final now = DateTime.now();
     final result = <_WeeklyVolumePoint>[];
 
@@ -457,13 +438,8 @@ class _VolumeLineChart extends StatelessWidget {
       }).toList();
 
       final volume = weekWorkouts.fold<double>(
-        0,
-        (sum, w) =>
-            sum +
-            w.exercises.fold<double>(
-              0,
-              (eSum, e) => eSum + ((e.weight ?? 0) * e.reps * e.sets),
-            ),
+        0.0,
+        (double sum, WorkoutEntity w) => sum + w.totalVolume,
       );
 
       result.add(_WeeklyVolumePoint(
@@ -513,6 +489,7 @@ class _WeightLineChart extends StatelessWidget {
     final minWeight = rawMinWeight.isFinite ? (rawMinWeight - 1.0).clamp(0.0, double.infinity) : 70.0;
     final maxWeight = (rawMaxWeight > minWeight) ? rawMaxWeight + 1.0 : minWeight + 5.0;
     final weightInterval = ((maxWeight - minWeight) / 4) > 0 ? ((maxWeight - minWeight) / 4) : 1.0;
+    final safeWeightInterval = weightInterval > 0 ? weightInterval : 1.0;
 
     return DataCard(
       child: SizedBox(
@@ -526,7 +503,7 @@ class _WeightLineChart extends StatelessWidget {
             gridData: FlGridData(
               show: true,
               drawVerticalLine: false,
-              horizontalInterval: weightInterval,
+              horizontalInterval: safeWeightInterval,
               getDrawingHorizontalLine: (value) => FlLine(
                 color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
                 strokeWidth: 1,
@@ -539,7 +516,7 @@ class _WeightLineChart extends StatelessWidget {
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 42,
-                  interval: weightInterval,
+                  interval: safeWeightInterval,
                   getTitlesWidget: (value, _) {
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
@@ -640,7 +617,7 @@ class _WeightPoint {
 // ═══════════════════════════════════════════════════════════════════════════════════════
 
 class _PrList extends StatelessWidget {
-  final List<dynamic> prs;
+  final List<PersonalRecordEntity> prs;
 
   const _PrList({required this.prs});
 
@@ -657,7 +634,7 @@ class _PrList extends StatelessWidget {
     }
 
     // Group by exercise
-    final grouped = <String, List<dynamic>>{};
+    final grouped = <String, List<PersonalRecordEntity>>{};
     for (final pr in prs) {
       grouped.putIfAbsent(pr.exerciseName, () => []).add(pr);
     }
@@ -743,7 +720,7 @@ class _PrCard extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════════════
 
 class _MuscleVolumeChart extends StatelessWidget {
-  final List<dynamic> workouts;
+  final List<WorkoutEntity> workouts;
 
   const _MuscleVolumeChart({required this.workouts});
 
@@ -859,7 +836,7 @@ class _MuscleVolumeChart extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════════════
 
 class _ConsistencyCard extends StatelessWidget {
-  final List<dynamic> workouts;
+  final List<WorkoutEntity> workouts;
   final int streak;
 
   const _ConsistencyCard({required this.workouts, required this.streak});
@@ -973,7 +950,7 @@ class _ConsistencyCard extends StatelessWidget {
     );
   }
 
-  int _calculateConsistency(List<dynamic> workouts) {
+  int _calculateConsistency(List<WorkoutEntity> workouts) {
     if (workouts.isEmpty) return 0;
 
     final now = DateTime.now();

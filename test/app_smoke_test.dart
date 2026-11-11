@@ -125,6 +125,62 @@ void main() {
     expect(find.text('Volume Trend'), findsOneWidget);
   });
 
+  testWidgets(
+      'ProgressScreen renders with workouts and exercises calculating volume without closure errors',
+      (tester) async {
+    final now = DateTime.now();
+    SharedPreferences.setMockInitialValues({
+      'arcfit_workouts': jsonEncode([
+        {
+          'id': 'w_1',
+          'user_id': 'user_1',
+          'date': now.toIso8601String(),
+          'title': 'Chest Day',
+          'total_sets': 3,
+          'total_reps': 30,
+          'total_calories_burned': 150.0,
+          'duration_minutes': 45.0,
+          'created_at': now.toIso8601String(),
+          'updated_at': now.toIso8601String(),
+          'exercises': [
+            {
+              'id': 'ex_1',
+              'exercise_id': 'bench_press',
+              'exercise_name': 'Flat barbell bench press',
+              'exercise_video_url': '',
+              'sets': 3,
+              'reps': 10,
+              'weight': 60.0,
+              'performed_at': now.toIso8601String(),
+            }
+          ]
+        }
+      ]),
+    });
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          authRepositoryProvider.overrideWithValue(LocalAuthRepository(prefs)),
+          workoutRepositoryProvider.overrideWithValue(LocalWorkoutRepository(prefs)),
+        ],
+        child: const MaterialApp(
+          home: ProgressScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Progress'), findsOneWidget);
+    expect(find.text('Overview'), findsOneWidget);
+    // 3 * 10 * 60 = 1800 kg = 1.8k kg
+    expect(find.text('1.8k kg'), findsOneWidget);
+    expect(find.text('Volume Trend'), findsOneWidget);
+    expect(find.text('Body Weight Trend'), findsOneWidget);
+  });
+
   testWidgets('/workouts route redirects to templates without GoException',
       (tester) async {
     SharedPreferences.setMockInitialValues({
